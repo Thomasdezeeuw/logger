@@ -5,6 +5,8 @@
 package logger
 
 import (
+	"bytes"
+	"errors"
 	"testing"
 	"time"
 )
@@ -61,4 +63,103 @@ func BenchmarkFormatMsg(b *testing.B) {
 		str = formatMsg(t, lvl, tags, msg)
 	}
 	result = str
+}
+
+func BenchmarkFatal(b *testing.B) {
+	b.ReportAllocs()
+	reset()
+	var buf bytes.Buffer
+	log, err := New("benchmark", 1024, &buf)
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+
+	msg := "Message"
+	tags := Tags{"test", "test2"}
+	for i := 0; i < b.N; i++ {
+		log.Fatal(tags, msg)
+	}
+
+	log.Close()
+	result = buf.String()
+}
+
+func BenchmarkError(b *testing.B) {
+	b.ReportAllocs()
+	reset()
+	var buf bytes.Buffer
+	log, err := New("benchmark", 1024, &buf)
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+
+	err = errors.New("some error")
+	tags := Tags{"test", "test2"}
+	for i := 0; i < b.N; i++ {
+		log.Error(tags, err)
+	}
+
+	log.Close()
+	result = buf.String()
+}
+
+func BenchmarkInfo(b *testing.B) {
+	b.ReportAllocs()
+	reset()
+	var buf bytes.Buffer
+	log, err := New("benchmark", 1024, &buf)
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+
+	msg := "Message"
+	tags := Tags{"test", "test2"}
+	for i := 0; i < b.N; i++ {
+		log.Info(tags, msg)
+	}
+
+	log.Close()
+	result = buf.String()
+}
+
+func BenchmarkDebug(b *testing.B) {
+	b.ReportAllocs()
+	reset()
+	var buf bytes.Buffer
+	log, err := New("benchmark", 1024, &buf)
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+
+	msg := "Message"
+	tags := Tags{"test", "test2"}
+	for i := 0; i < b.N; i++ {
+		log.Debug(tags, msg)
+	}
+
+	log.Close()
+	result = buf.String()
+}
+
+func BenchmarkThumbstone(b *testing.B) {
+	b.ReportAllocs()
+	reset()
+	var buf bytes.Buffer
+	log, err := New("benchmark", 1024, &buf)
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+
+	msg := "Message"
+	for i := 0; i < b.N; i++ {
+		log.Thumbstone(msg)
+	}
+
+	log.Close()
+	result = buf.String()
 }
