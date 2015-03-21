@@ -2,7 +2,7 @@
 //
 // Licensed onder the MIT license that can be found in the LICENSE file.
 
-// Package Logger provides multiple ways to log information of different level
+// Package logger provides multiple ways to log information of different level
 // of importance. No default logger is created, but Get is provided to get any
 // logger at any location.
 package logger

@@ -100,5 +100,5 @@ func doSomething(str string) error {
 	// Log an debug message.
 	log.Debug(logger.Tags{"file.go", "doSomething"}, "doSomething(%q)", str)
 
-	return errors.New("oops!")
+	return errors.New("oops")
 }
