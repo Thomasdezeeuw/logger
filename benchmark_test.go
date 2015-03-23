@@ -125,7 +125,7 @@ func BenchmarkInfo(b *testing.B) {
 	result = buf.String()
 }
 
-func BenchmarkDebug(b *testing.B) {
+func BenchmarkDebugDisabled(b *testing.B) {
 	b.ReportAllocs()
 	reset()
 	var buf bytes.Buffer
@@ -133,6 +133,28 @@ func BenchmarkDebug(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
+	log.ShowDebug = false
+	b.ResetTimer()
+
+	msg := "Message"
+	tags := Tags{"test", "test2"}
+	for i := 0; i < b.N; i++ {
+		log.Debug(tags, msg)
+	}
+
+	log.Close()
+	result = buf.String()
+}
+
+func BenchmarkDebugEnabled(b *testing.B) {
+	b.ReportAllocs()
+	reset()
+	var buf bytes.Buffer
+	log, err := New("benchmark", 1024, &buf)
+	if err != nil {
+		b.Fatal(err)
+	}
+	log.ShowDebug = true
 	b.ResetTimer()
 
 	msg := "Message"
