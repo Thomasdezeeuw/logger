@@ -53,16 +53,24 @@ func BenchmarkItoa4(b *testing.B) {
 	result = string(buf)
 }
 
-func BenchmarkFormatMsg(b *testing.B) {
+func BenchmarkMsgString(b *testing.B) {
 	b.ReportAllocs()
 	var str string
-	t := time.Now()
-	var lvl, msg = "ERROR", "Message"
-	tags := Tags{"test", "test2"}
+	msg := Msg{time.Now(), "DEBUG", Tags{"test", "test2"}, "Message"}
 	for i := 0; i < b.N; i++ {
-		str = formatMsg(t, lvl, tags, msg)
+		str = msg.String()
 	}
 	result = str
+}
+
+func BenchmarkMsgBytes(b *testing.B) {
+	b.ReportAllocs()
+	var buf []byte
+	msg := Msg{time.Now(), "DEBUG", Tags{"test", "test2"}, "Message"}
+	for i := 0; i < b.N; i++ {
+		buf = msg.Bytes()
+	}
+	result = string(buf)
 }
 
 func BenchmarkFatal(b *testing.B) {

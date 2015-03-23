@@ -2,6 +2,8 @@
 //
 // Licensed onder the MIT license that can be found in the LICENSE file.
 
+// TODO: DRY New, NewMsgWriter & Combine functions.
+
 // Package logger provides multiple ways to log information of different level
 // of importance. No default logger is created, but Get is provided to get any
 // logger at any location.
@@ -18,6 +20,11 @@ import (
 	"strings"
 	"time"
 )
+
+// MsgWriter takes a msg and writes it to the output.
+type MsgWriter interface {
+	WriteMsg(Msg) (int, error)
+}
 
 // Flusher interface to check if the writer can flush.
 type flusher interface {
@@ -65,6 +72,69 @@ func (tags *Tags) Bytes() []byte {
 	return buf
 }
 
+// Msg is a message created by a log operation.
+type Msg struct {
+	// Time the log operation is called.
+	Timestamp time.Time
+
+	// Level of the log operation.
+	Level string
+
+	// The tags from the log operation.
+	Tags Tags
+
+	// The message that needs to be logged.
+	Msg string
+}
+
+// String creates a string message in the following format:
+//	YYYY-MM-DD HH:MM:SS [LEVEL] tag1, tag2...: message
+func (msg *Msg) String() string {
+	return string(msg.Bytes())
+}
+
+// Bytes formats a message in the following format:
+//	YYYY-MM-DD HH:MM:SS [LEVEL] tag1, tag2...: message
+func (msg *Msg) Bytes() []byte {
+	buf := make([]byte, 0, 100)
+
+	// Write the date and time.
+	// Format: "YYYY-MM-DD HH:MM:SS ".
+	year, month, day := msg.Timestamp.Date()
+	hour, min, sec := msg.Timestamp.Clock()
+	itoa(&buf, year, 4)
+	buf = append(buf, '-')
+	itoa(&buf, int(month), 2)
+	buf = append(buf, '-')
+	itoa(&buf, day, 2)
+	buf = append(buf, ' ')
+	itoa(&buf, hour, 2)
+	buf = append(buf, ':')
+	itoa(&buf, min, 2)
+	buf = append(buf, ':')
+	itoa(&buf, sec, 2)
+	buf = append(buf, ' ')
+
+	// Write the level.
+	// Format: "[LEVEL] " (levle is always 5 characters long).
+	buf = append(buf, '[')
+	buf = append(buf, msg.Level...)
+	buf = append(buf, ']')
+	buf = append(buf, ' ')
+
+	// Write the tags.
+	// Format: "tag1, tag2, etc...: ".
+	buf = append(buf, msg.Tags.Bytes()...)
+	buf = append(buf, ':')
+	buf = append(buf, ' ')
+
+	// The actual message.
+	buf = append(buf, strings.TrimSpace(msg.Msg)...)
+	buf = append(buf, '\n')
+
+	return buf
+}
+
 // Collection of all created logger by name, used by the Get function.
 var loggers = map[string]*Logger{}
 
@@ -91,11 +161,13 @@ type Logger struct {
 	// creating of the logger.
 	ShowDebug bool
 
-	// The writer where the items are written to.
-	w io.Writer
+	// The writers where the items are written to. Either w or wMsg is used, the
+	// one not used should be nil.
+	w    io.Writer
+	wMsg MsgWriter
 
-	// The log item channel, it's used for actually writing the items.
-	logs chan string
+	// The log messages channel, it's used for actually writing the messages.
+	logs chan Msg
 
 	// Indicating the writer closed, having a possible flush or close error.
 	closed chan error
@@ -109,28 +181,28 @@ func (l *Logger) Fatal(tags Tags, recv interface{}) {
 	buf = bytes.Trim(buf, "\x00")
 
 	// Try to make some sense of the recoverd value.
-	var msg string
+	var item string
 	switch v := recv.(type) {
 	case string:
-		msg = v
+		item = v
 	case error:
-		msg = v.Error()
+		item = v.Error()
 	default:
-		msg = fmt.Sprintf("%v", recv)
+		item = fmt.Sprintf("%v", recv)
 	}
 
-	msg += "\n" + string(buf)
-	l.logs <- formatMsg(time.Now(), "FATAL", tags, msg)
+	item += "\n" + string(buf)
+	l.logs <- Msg{time.Now(), "FATAL", tags, item}
 }
 
 // Error logs a recoverable error.
 func (l *Logger) Error(tags Tags, err error) {
-	l.logs <- formatMsg(time.Now(), "ERROR", tags, err.Error())
+	l.logs <- Msg{time.Now(), "ERROR", tags, err.Error()}
 }
 
 // Info logs an informational message.
 func (l *Logger) Info(tags Tags, format string, v ...interface{}) {
-	l.logs <- formatMsg(time.Now(), "INFO ", tags, fmt.Sprintf(format, v...))
+	l.logs <- Msg{time.Now(), "INFO ", tags, fmt.Sprintf(format, v...)}
 }
 
 // Debug logs the lowest level of information, only usefull when debugging
@@ -138,7 +210,7 @@ func (l *Logger) Info(tags Tags, format string, v ...interface{}) {
 // defaults to false.
 func (l *Logger) Debug(tags Tags, format string, v ...interface{}) {
 	if l.ShowDebug {
-		l.logs <- formatMsg(time.Now(), "DEBUG", tags, fmt.Sprintf(format, v...))
+		l.logs <- Msg{time.Now(), "DEBUG", tags, fmt.Sprintf(format, v...)}
 	}
 }
 
@@ -146,8 +218,8 @@ func (l *Logger) Debug(tags Tags, format string, v ...interface{}) {
 // software it's possible to introduce dead code with updates and new features.
 // If a function is being suspected of being dead (not used) in production, add
 // a call to Thumbstone and check the production logs to see if you're right.
-func (l *Logger) Thumbstone(msg string) {
-	l.logs <- formatMsg(time.Now(), "THUMB", Tags{"thumbstone"}, msg)
+func (l *Logger) Thumbstone(item string) {
+	l.logs <- Msg{time.Now(), "THUMB", Tags{"thumbstone"}, item}
 }
 
 // Close blocks until all logs are written to the writer. It will call Flush()
@@ -164,15 +236,26 @@ func (l *Logger) Close() error {
 	// Wait for an response with a possible error.
 	err := <-l.closed
 
-	// If we need to close, try to flush the writer if it's supported.
-	if fw, ok := l.w.(flusher); ok {
-		err = fw.Flush()
-	}
-
-	// Also try to close the writer.
-	if cw, ok := l.w.(io.Closer); ok {
-		if closeErr := cw.Close(); err == nil {
-			err = closeErr
+	// Either try to flush the io writer or the message writer. Also try to close
+	// the writer.
+	// TODO: improve thise code.
+	if l.w != nil {
+		if fw, ok := l.w.(flusher); ok {
+			err = fw.Flush()
+		}
+		if cw, ok := l.w.(io.Closer); ok {
+			if closeErr := cw.Close(); err == nil {
+				err = closeErr
+			}
+		}
+	} else {
+		if fw, ok := l.wMsg.(flusher); ok {
+			err = fw.Flush()
+		}
+		if cw, ok := l.wMsg.(io.Closer); ok {
+			if closeErr := cw.Close(); err == nil {
+				err = closeErr
+			}
 		}
 	}
 
@@ -203,9 +286,47 @@ func New(name string, size int, w io.Writer) (*Logger, error) {
 			select {
 			case <-log.closed: // Indicator that the logger is closing.
 				closed = true
-			case item := <-log.logs: // Received a log item.
+			case msg := <-log.logs: // Received a log message.
 				// TODO: handle error!
-				log.w.Write([]byte(item))
+				log.w.Write(msg.Bytes())
+			case <-time.After(50 * time.Millisecond):
+				// After a timeout we check if we need to close the logger.
+				if closed {
+					// We logged all the log items, and we can let the Close function
+					// know we're done, without an error.
+					log.closed <- nil
+					return
+				}
+			}
+		}
+	}(log)
+
+	return log, nil
+}
+
+// NewMsgWriter creates a new logger, similar to New but with a message writer.
+// A message writer takes a Msg, which is usefull for writer which don't write
+// to a text output.
+func NewMsgWriter(name string, size int, w MsgWriter) (*Logger, error) {
+	// Create a regular logger with nil as an io.Writer
+	log, err := newLogger(name, size, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Then set our message writer.
+	log.wMsg = w
+
+	go func(log *Logger) {
+		var closed bool
+
+		for {
+			select {
+			case <-log.closed: // Indicator that the logger is closing.
+				closed = true
+			case msg := <-log.logs: // Received a log message.
+				// TODO: handle error!
+				log.wMsg.WriteMsg(msg)
 			case <-time.After(50 * time.Millisecond):
 				// After a timeout we check if we need to close the logger.
 				if closed {
@@ -264,9 +385,9 @@ func Combine(name string, size int, logs ...*Logger) (*Logger, error) {
 			select {
 			case <-log.closed: // Indicator that the logger is closing.
 				closed = true
-			case item := <-log.logs: // Received an log item.
+			case msg := <-log.logs: // Received an log message.
 				for _, log := range logs {
-					log.logs <- item
+					log.logs <- msg
 				}
 			case <-time.After(50 * time.Millisecond):
 				// After a timeout we check if we need to close the logger.
@@ -313,56 +434,12 @@ func newLogger(name string, size int, w io.Writer) (*Logger, error) {
 	log := &Logger{
 		Name:   name,
 		w:      w,
-		logs:   make(chan string, size),
+		logs:   make(chan Msg, size),
 		closed: make(chan error), // needs to block!
 	}
 
 	loggers[name] = log
 	return log, nil
-}
-
-// FormatMsg formats a message in the following format:
-//	YYYY-MM-DD HH:MM:SS [LEVEL] tag1, tag2...: message
-// The length up to and including the level will always be the same (the INFO
-// level adds an extra space).
-func formatMsg(t time.Time, lvl string, tags Tags, msg string) string {
-	buf := make([]byte, 0, 100)
-
-	// Write the date and time.
-	// Format: "YYYY-MM-DD HH:MM:SS ".
-	year, month, day := t.Date()
-	hour, min, sec := t.Clock()
-	itoa(&buf, year, 4)
-	buf = append(buf, '-')
-	itoa(&buf, int(month), 2)
-	buf = append(buf, '-')
-	itoa(&buf, day, 2)
-	buf = append(buf, ' ')
-	itoa(&buf, hour, 2)
-	buf = append(buf, ':')
-	itoa(&buf, min, 2)
-	buf = append(buf, ':')
-	itoa(&buf, sec, 2)
-	buf = append(buf, ' ')
-
-	// Write the level.
-	// Format: "[LEVEL] " (always 5 characters long).
-	buf = append(buf, '[')
-	buf = append(buf, lvl...)
-	buf = append(buf, ']')
-	buf = append(buf, ' ')
-
-	// Write the tags.
-	// Format: "tag1, tag2...: ".
-	buf = append(buf, tags.Bytes()...)
-	buf = append(buf, ':')
-	buf = append(buf, ' ')
-
-	// Finally write the message.
-	buf = append(buf, strings.TrimSpace(msg)...)
-	buf = append(buf, '\n')
-
-	return string(buf)
 }
 
 // Cheap integer to fixed-width decimal ASCII. Modified version from the Golang
