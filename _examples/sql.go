@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"database/sql"
 	"errors"
-	"strings"
 
 	"github.com/Thomasdezeeuw/logger"
 	_ "github.com/go-sql-driver/mysql"
@@ -23,20 +21,8 @@ type sqlWriter struct {
 	query *sql.Stmt
 }
 
-func (sql *sqlWriter) Write(b []byte) (int, error) {
-	// The message will always be in the following format:
-	// YYYY-MM-DD HH:MM:SS [LEVEL] tag1, tag2...: msg
-	// The date, time and level will always be of the same length.
-	// The tags and message however are not.
-
-	date := string(b[:19])
-	lvl := strings.TrimSpace(string(b[21:26])) // INFO has an extra space.
-
-	bb := bytes.SplitN(b[27:], []byte(":"), 2)
-	tags := strings.TrimSpace(string(bb[0]))
-	msg := strings.TrimSpace(string(bb[1]))
-
-	_, err := sql.query.Exec(date, lvl, tags, msg)
+func (sql *sqlWriter) WriteMsg(msg logger.Msg) (int, error) {
+	_, err := sql.query.Exec(msg.Timestamp, msg.Level, msg.Tags, msg.Msg)
 	if err != nil {
 		// It might be usefull to have some sort of backup log, like a file or
 		// stdout to catch these kind of errors (altough they should be caught with
@@ -66,7 +52,7 @@ func init() {
 	w := &sqlWriter{query: query}
 
 	// Create a new logger like normal.
-	log, err = logger.New("AppDB", 1024, w)
+	log, err = logger.NewMsgWriter("AppDB", 1024, w)
 	if err != nil {
 		panic(err)
 	}
