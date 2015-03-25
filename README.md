@@ -21,17 +21,35 @@ You can put debug statements everywhere and only show ones you're interested in.
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/Thomasdezeeuw/logger"
 )
 
+type msgWriter struct{}
+
+func (sql *msgWriter) WriteMsg(msg logger.Msg) (int, error) {
+	return fmt.Printf("%v [%s] %s: %s", msg.Timestamp, msg.Level,
+		msg.Tags.String(), msg.Msg)
+}
+
 var log *logger.Logger
+var log2 *logger.Logger
 
 func init() {
 	var err error
-	// Setup a new logger with a name, path to a file and the buffer size.
+	// Setup a new logger with a name, a buffer size and an io.Writer.
+	// The name is used to logger.Get(name) the same logger later in other files
+	// or packages. The buffer size is used in the channel for log operations.
 	log, err = logger.New("Std", 1024, os.Stdout)
+	if err != nil {
+		panic(err)
+	}
+
+	// Or we can create a logger with a special [MsgWriter]("https://godoc.org/github.com/Thomasdezeeuw/logger#MsgWriter").
+	w := new(msgWriter)
+	log2, err = logger.NewMsgWriter("Special", 1024, w)
 	if err != nil {
 		panic(err)
 	}
@@ -42,8 +60,9 @@ func main() {
 	defer log.Close()
 
 	user := "Thomas"
-	tags := logger.Tags{"README.md", "main"}
+	tags := logger.Tags{"README.md", "main", "user"}
 	log.Info(tags, "Hi %s!", user)
+	log2.Info(tags, "Hi %s!", user)
 }
 ```
 
