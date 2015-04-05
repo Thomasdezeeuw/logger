@@ -15,7 +15,8 @@ $ go get github.com/Thomasdezeeuw/logger
 
 ## Usage
 
-You can put debug statements everywhere and only show ones you're interested in.
+You can create a logger once and retrieve it everywhere in each pacakge to log
+items.
 
 ```go
 package main
