@@ -6,7 +6,8 @@
 
 // Package logger provides multiple ways to log information of different level
 // of importance. No default logger is created, but Get is provided to get any
-// logger at any location.
+// logger at any location. See the provided examples, both in the documentation
+// and the _examples directory (for complete examples).
 package logger
 
 import (
@@ -39,11 +40,6 @@ type MsgWriter interface {
 	WriteMsg(Msg) error
 }
 
-// Flusher interface to check if the writer can flush.
-type flusher interface {
-	Flush() error
-}
-
 // FileWriter is an struct used in closing the underlying file if using a
 // buffered writer.
 type fileWriter struct {
@@ -56,9 +52,9 @@ func (w *fileWriter) Close() error {
 	return w.f.Close()
 }
 
-// Tags are keywords usefull in searching logs. Examples of these are
-// - "file.go", "myFn"; indicating the location of the log operation.
-// - "user:$id"; indicating a user is logged in (usefull in user specific bugs)
+// Tags are keywords usefull in searching logs. Examples of these are:
+//	"file.go", "myFn" // indicating the location of the log operation.
+//	"user:$id" // indicating a user is logged in (usefull in user specific bugs)
 type Tags []string
 
 // String creates a comma separated list from the tags in string.
@@ -93,13 +89,13 @@ type Msg struct {
 }
 
 // String creates a string message in the following format:
-//	YYYY-MM-DD HH:MM:SS [LEVEL] tag1, tag2...: message
+//	YYYY-MM-DD HH:MM:SS [LEVEL] tag1, tag2: message
 func (msg *Msg) String() string {
 	return string(msg.Bytes())
 }
 
 // Bytes formats a message in the following format:
-//	YYYY-MM-DD HH:MM:SS [LEVEL] tag1, tag2...: message
+//	YYYY-MM-DD HH:MM:SS [LEVEL] tag1, tag2: message
 func (msg *Msg) Bytes() []byte {
 	buf := make([]byte, 0, defaultMsgSize)
 
@@ -128,7 +124,7 @@ func (msg *Msg) Bytes() []byte {
 	buf = append(buf, ' ')
 
 	// Write the tags.
-	// Format: "tag1, tag2, etc...: ".
+	// Format: "tag1, tag2: ".
 	buf = append(buf, msg.Tags.Bytes()...)
 	buf = append(buf, ':')
 	buf = append(buf, ' ')
@@ -140,6 +136,22 @@ func (msg *Msg) Bytes() []byte {
 	return buf
 }
 
+// Cheap integer to fixed-width decimal ASCII. Modified version from the Golang
+// logger package.
+func itoa(buf *[]byte, i int, wid int) {
+	var b [4]byte // only used for year, month and day so 4 is enough.
+	bp := len(b) - 1
+	for i >= 10 || wid > 1 {
+		wid--
+		q := i / 10
+		b[bp] = byte('0' + i - q*10)
+		bp--
+		i = q
+	}
+	b[bp] = byte('0' + i)
+	*buf = append(*buf, b[bp:]...)
+}
+
 // Collection of all created loggers by name, used by the Get function.
 var loggers = map[string]*Logger{}
 
@@ -149,7 +161,7 @@ var loggers = map[string]*Logger{}
 // used simultaneously from multiple goroutines, it guarantees to serialize
 // access to the Writer. Messages (for the io.Writer) will always be in the
 // following format (where level is always 5 characters long):
-//	YYYY-MM-DD HH:MM:SS [LEVEL] tag1, tag2...: message
+//	YYYY-MM-DD HH:MM:SS [LEVEL] tag1, tag2: message
 //
 // There are four different log levels (from higher to lower): Fatal, Error,
 // Info and Debug, aswell as Thumbstone which is a special case. Thumbstone is
@@ -171,6 +183,7 @@ type Logger struct {
 	logs chan Msg
 
 	// Indicating the writer closed, having a possible flush or close error.
+	// todo: how to expose these errors?!
 	errors chan []error
 }
 
@@ -229,15 +242,17 @@ func (l *Logger) Thumbstone(item string) {
 //
 // Note: if a log operation is called after Close is called it will panic.
 func (l *Logger) Close() error {
-	close(l.logs)
+	type flusher interface {
+		Flush() error
+	}
 
-	var err error
-	// todo: how to expose these errors?!
+	close(l.logs)
 	errors := <-l.errors
 
 	// Either try to flush the io writer or the message writer. Also try to close
 	// the writer.
 	// TODO: improve thise code.
+	var err error
 	if l.w != nil {
 		if fw, ok := l.w.(flusher); ok {
 			err = fw.Flush()
@@ -348,8 +363,10 @@ func Get(name string) (*Logger, error) {
 	return log, nil
 }
 
-// Combine combines multiple loggers. It's advised to use the same size for all
-// loggers.
+// Combine combines multiple loggers.
+//
+// todo: provide usefull example, using Stdout in development (with Debug
+// enabled) and only to a file in production.
 func Combine(name string, logs ...*Logger) (*Logger, error) {
 	if len(logs) == 0 {
 		return nil, errors.New("logger: Combine requires atleast one logger")
@@ -363,6 +380,7 @@ func Combine(name string, logs ...*Logger) (*Logger, error) {
 	go func(log *Logger, logs []*Logger) {
 		var errors []error
 
+		// Relay our messages to the other loggers.
 		for msg := range log.logs {
 			for _, l := range logs {
 				l.logs <- msg
@@ -408,20 +426,4 @@ func newLogger(name string, w io.Writer) (*Logger, error) {
 
 	loggers[name] = log
 	return log, nil
-}
-
-// Cheap integer to fixed-width decimal ASCII. Modified version from the Golang
-// logger package.
-func itoa(buf *[]byte, i int, wid int) {
-	var b [4]byte // only used for year, month and day so 4 is enough.
-	bp := len(b) - 1
-	for i >= 10 || wid > 1 {
-		wid--
-		q := i / 10
-		b[bp] = byte('0' + i - q*10)
-		bp--
-		i = q
-	}
-	b[bp] = byte('0' + i)
-	*buf = append(*buf, b[bp:]...)
 }
