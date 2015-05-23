@@ -22,10 +22,11 @@ import (
 )
 
 const (
-	defaultStackSize = 4096
-	defaultTagsSize  = 50
-	defaultMsgSize   = 100
-	defaultLogsSize  = 1024
+	defaultStackSize  = 4096
+	defaultTagsSize   = 50
+	defaultMsgSize    = 100
+	defaultLogsSize   = 1024
+	defaultErrorsSize = 10
 )
 
 const (
@@ -174,7 +175,7 @@ type Logger struct {
 	logs chan Msg
 
 	// Indicating the writer closed, having a possible flush or close error.
-	closed chan error
+	errors chan []error
 }
 
 // Fatal logs a recovered error which could have killed the program.
@@ -230,15 +231,13 @@ func (l *Logger) Thumbstone(item string) {
 // and Close() on the writer if supported. If either of the functions returns
 // an error it will be returned by this function (Flush error first).
 //
-// Note: it will block forever if logs are still being written, so it's
-// required to first stop writing logs and then call Logger.Close.
+// Note: if a log operation is called after Close is called it will panic.
 func (l *Logger) Close() error {
-	// First send to the go routine that we need to close, then wait for the go
-	// routine to close.
-	l.closed <- nil
+	close(l.logs)
 
-	// Wait for an response with a possible error.
-	err := <-l.closed
+	var err error
+	// todo: how to expose these errors?!
+	errors := <-l.errors
 
 	// Either try to flush the io writer or the message writer. Also try to close
 	// the writer.
@@ -263,6 +262,10 @@ func (l *Logger) Close() error {
 		}
 	}
 
+	if err == nil && len(errors) >= 1 {
+		err = errors[0]
+	}
+
 	return err
 }
 
@@ -281,25 +284,16 @@ func New(name string, w io.Writer) (*Logger, error) {
 	}
 
 	go func(log *Logger) {
-		var closed bool
+		var errors []error
 
-		for {
-			select {
-			case <-log.closed: // Indicator that the logger is closing.
-				closed = true
-			case msg := <-log.logs: // Received a log message.
-				// TODO: handle error!
-				log.w.Write(msg.Bytes())
-			case <-time.After(50 * time.Millisecond):
-				// After a timeout we check if we need to close the logger.
-				if closed {
-					// We logged all the log items, and we can let the Close function
-					// know we're done, without an error.
-					log.closed <- nil
-					return
-				}
+		for msg := range log.logs {
+			_, err := log.w.Write(msg.Bytes())
+			if err != nil {
+				errors = append(errors, err)
 			}
 		}
+
+		log.errors <- errors
 	}(log)
 
 	return log, nil
@@ -319,25 +313,16 @@ func NewMsgWriter(name string, w MsgWriter) (*Logger, error) {
 	log.wMsg = w
 
 	go func(log *Logger) {
-		var closed bool
+		var errors []error
 
-		for {
-			select {
-			case <-log.closed: // Indicator that the logger is closing.
-				closed = true
-			case msg := <-log.logs: // Received a log message.
-				// TODO: handle error!
-				log.wMsg.WriteMsg(msg)
-			case <-time.After(50 * time.Millisecond):
-				// After a timeout we check if we need to close the logger.
-				if closed {
-					// We logged all the log items, and we can let the Close function
-					// know we're done, without an error.
-					log.closed <- nil
-					return
-				}
+		for msg := range log.logs {
+			_, err := log.wMsg.WriteMsg(msg)
+			if err != nil {
+				errors = append(errors, err)
 			}
 		}
+
+		log.errors <- errors
 	}(log)
 
 	return log, nil
@@ -380,46 +365,32 @@ func Combine(name string, logs ...*Logger) (*Logger, error) {
 	}
 
 	go func(log *Logger, logs []*Logger) {
-		var closed bool
+		var errors []error
 
-		for {
-			select {
-			case <-log.closed: // Indicator that the logger is closing.
-				closed = true
-			case msg := <-log.logs: // Received an log message.
-				for _, log := range logs {
-					log.logs <- msg
-				}
-			case <-time.After(50 * time.Millisecond):
-				// After a timeout we check if we need to close the logger.
-				if closed {
-					i := len(logs)
-					errChan := make(chan error, i)
-
-					// Close all underlying loggers.
-					for _, log := range logs {
-						go func(log *Logger) {
-							errChan <- log.Close()
-						}(log)
-					}
-
-					// Wait for all underlying loggers to respond.
-					var err error
-					for i > 0 {
-						// Check for the error, if no error has happend yet we'll use this
-						// error.
-						if lErr := <-errChan; err == nil && lErr != nil {
-							err = lErr
-						}
-						i--
-					}
-
-					// Return a possible error.
-					log.closed <- err
-					return
-				}
+		for msg := range log.logs {
+			for _, l := range logs {
+				l.logs <- msg
 			}
 		}
+
+		errChan := make(chan error, 5)
+
+		// Close all underlying loggers.
+		for _, log := range logs {
+			go func(log *Logger) {
+				errChan <- log.Close()
+			}(log)
+		}
+
+		// Wait for all underlying loggers to respond.
+		for i := len(logs); i > 0; i-- {
+			err := <-errChan
+			if err != nil {
+				errors = append(errors, err)
+			}
+		}
+
+		log.errors <- errors
 	}(log, logs)
 
 	return log, nil
@@ -436,7 +407,7 @@ func newLogger(name string, w io.Writer) (*Logger, error) {
 		Name:   name,
 		w:      w,
 		logs:   make(chan Msg, defaultLogsSize),
-		closed: make(chan error), // needs to block!
+		errors: make(chan []error, defaultErrorsSize),
 	}
 
 	loggers[name] = log
