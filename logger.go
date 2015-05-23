@@ -22,7 +22,15 @@ import (
 )
 
 const (
+	defaultStackSize = 4096
+	defaultTagsSize  = 50
+	defaultMsgSize   = 100
 	defaultLogsSize  = 1024
+)
+
+const (
+	fileFlag       = os.O_CREATE | os.O_APPEND | os.O_WRONLY
+	filePermission = 0644
 )
 
 // MsgWriter takes a msg and writes it to the output.
@@ -59,7 +67,7 @@ func (tags *Tags) String() string {
 
 // Bytes creates a comma separated list from the tags in bytes.
 func (tags *Tags) Bytes() []byte {
-	buf := make([]byte, 0, 50)
+	buf := make([]byte, 0, defaultTagsSize)
 
 	// Add each tag in the form of "tag, "
 	for _, tag := range *tags {
@@ -92,7 +100,7 @@ func (msg *Msg) String() string {
 // Bytes formats a message in the following format:
 //	YYYY-MM-DD HH:MM:SS [LEVEL] tag1, tag2...: message
 func (msg *Msg) Bytes() []byte {
-	buf := make([]byte, 0, 100)
+	buf := make([]byte, 0, defaultMsgSize)
 
 	// Write the date and time.
 	// Format: "YYYY-MM-DD HH:MM:SS ".
@@ -172,7 +180,7 @@ type Logger struct {
 // Fatal logs a recovered error which could have killed the program.
 func (l *Logger) Fatal(tags Tags, recv interface{}) {
 	// Capture the stack trace and drop null bytes (they'll show up as spaces).
-	buf := make([]byte, 8192)
+	buf := make([]byte, defaultStackSize)
 	runtime.Stack(buf, false)
 	buf = bytes.Trim(buf, "\x00")
 
@@ -338,7 +346,7 @@ func NewMsgWriter(name string, w MsgWriter) (*Logger, error) {
 // NewFile creates a new logger that logs to a file, it uses bufio to buffer
 // the writes.
 func NewFile(name, path string) (*Logger, error) {
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(path, fileFlag, filePermission)
 	if err != nil {
 		return nil, err
 	}
