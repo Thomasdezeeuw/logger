@@ -88,13 +88,13 @@ var msgTests = []struct {
 	msg      Msg
 	expected string
 }{
-	{Msg{now, "FATAL", Tags{}, "Message"},
+	{Msg{"FATAL", "Message", Tags{}, now},
 		tStr + " [FATAL] : Message\n"},
-	{Msg{now, "ERROR", Tags{"tag1"}, "Message"},
+	{Msg{"ERROR", "Message", Tags{"tag1"}, now},
 		tStr + " [ERROR] tag1: Message\n"},
-	{Msg{now, "INFO ", Tags{"tag1", "tag2"}, "Message"},
+	{Msg{"INFO ", "Message", Tags{"tag1", "tag2"}, now},
 		tStr + " [INFO ] tag1, tag2: Message\n"},
-	{Msg{now, "DEBUG", Tags{"tag1", "tag2", "tag3"}, "Message"},
+	{Msg{"DEBUG", "Message", Tags{"tag1", "tag2", "tag3"}, now},
 		tStr + " [DEBUG] tag1, tag2, tag3: Message\n"},
 }
 
@@ -196,11 +196,11 @@ func TestLogger(t *testing.T) {
 	}
 
 	expectedSlice := []Msg{
-		Msg{now, "THUMB", Tags{"thumbstone"}, msg},
-		Msg{now, "INFO ", tags, msg},
-		Msg{now, "INFO ", tags, msg},
-		Msg{now, "ERROR", tags, msg},
-		Msg{now, "FATAL", tags, msg},
+		Msg{"THUMB", msg, Tags{"thumbstone"}, now},
+		Msg{"INFO ", msg, tags, now},
+		Msg{"INFO ", msg, tags, now},
+		Msg{"ERROR", msg, tags, now},
+		Msg{"FATAL", msg, tags, now},
 	}
 
 	scanner := bufio.NewScanner(&buf)
@@ -247,9 +247,9 @@ func TestLogger2(t *testing.T) {
 		}
 
 		expectedSlice := []Msg{
-			Msg{now, "DEBUG", tags, msg},
-			Msg{now, "DEBUG", tags, msg},
-			Msg{now, "FATAL", tags, msg},
+			Msg{"DEBUG", msg, tags, now},
+			Msg{"DEBUG", msg, tags, now},
+			Msg{"FATAL", msg, tags, now},
 		}
 
 		scanner := bufio.NewScanner(&buf)
@@ -295,7 +295,7 @@ func TestLoggerFatal(t *testing.T) {
 	}
 
 	expectedSlice := []Msg{
-		Msg{now, "FATAL", tags, msg},
+		Msg{"FATAL", msg, tags, now},
 	}
 
 	scanner := bufio.NewScanner(&buf)
@@ -337,7 +337,7 @@ func TestLoggerFatal2(t *testing.T) {
 	}
 
 	expectedSlice := []Msg{
-		Msg{now, "FATAL", tags, msg},
+		Msg{"FATAL", msg, tags, now},
 	}
 
 	scanner := bufio.NewScanner(&buf)
@@ -439,7 +439,7 @@ func TestNewMsgWriter(t *testing.T) {
 		t.Fatal("Unexpected error, closing a logger: " + err.Error())
 	}
 
-	m1, m2 := Msg{t1, "INFO ", tags, msg}, Msg{t2, "INFO ", tags, msg}
+	m1, m2 := Msg{"INFO ", msg, tags, t1}, Msg{"INFO ", msg, tags, t2}
 	expected := m1.String() + m2.String()
 	got := buf.String()
 	if got != expected {
@@ -499,7 +499,7 @@ func TestNew(t *testing.T) {
 		t.Fatal("Unexpected error, closing a logger: " + err.Error())
 	}
 
-	m1, m2 := Msg{t1, "INFO ", tags, msg}, Msg{t2, "INFO ", tags, msg}
+	m1, m2 := Msg{"INFO ", msg, tags, t1}, Msg{"INFO ", msg, tags, t2}
 	expected := m1.String() + m2.String()
 	got := buf.String()
 	if got != expected {
@@ -570,7 +570,7 @@ func TestNewFile(t *testing.T) {
 	}
 	got := string(gotBytes)
 
-	m1, m2 := Msg{t1, "INFO ", tags, msg}, Msg{t2, "INFO ", tags, msg}
+	m1, m2 := Msg{"INFO ", msg, tags, t1}, Msg{"INFO ", msg, tags, t2}
 	expected := m1.String() + m2.String()
 	if got != expected {
 		t.Fatalf("Expected logger to write %q, but got %q", expected, got)
@@ -610,8 +610,8 @@ func TestCombine(t *testing.T) {
 
 	now := time.Now()
 	expectedSlice := []Msg{
-		Msg{now, "INFO ", tags, msg},
-		Msg{now, "INFO ", tags, msg},
+		Msg{"INFO ", msg, tags, now},
+		Msg{"INFO ", msg, tags, now},
 	}
 
 	scanner1 := bufio.NewScanner(&buf1)

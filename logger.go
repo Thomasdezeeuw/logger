@@ -74,17 +74,9 @@ func (tags *Tags) Bytes() []byte {
 
 // Msg is a message created by a log operation.
 type Msg struct {
-	// Time the log operation is called.
-	Timestamp time.Time
-
-	// Level of the log operation.
-	Level string
-
-	// The tags from the log operation.
-	Tags Tags
-
-	// The message that needs to be logged.
-	Msg string
+	Level, Msg string
+	Tags       Tags
+	Timestamp  time.Time
 }
 
 // String creates a string message in the following format:
@@ -192,17 +184,17 @@ func (l *Logger) Fatal(tags Tags, recv interface{}) {
 	}
 
 	item += "\n" + string(buf)
-	l.logs <- Msg{time.Now(), "FATAL", tags, item}
+	l.logs <- Msg{"FATAL", item, tags, time.Now()}
 }
 
 // Error logs a recoverable error.
 func (l *Logger) Error(tags Tags, err error) {
-	l.logs <- Msg{time.Now(), "ERROR", tags, err.Error()}
+	l.logs <- Msg{"ERROR", err.Error(), tags, time.Now()}
 }
 
 // Info logs an informational message.
 func (l *Logger) Info(tags Tags, format string, v ...interface{}) {
-	l.logs <- Msg{time.Now(), "INFO ", tags, fmt.Sprintf(format, v...)}
+	l.logs <- Msg{"INFO ", fmt.Sprintf(format, v...), tags, time.Now()}
 }
 
 // Debug logs the lowest level of information, only usefull when debugging
@@ -210,7 +202,7 @@ func (l *Logger) Info(tags Tags, format string, v ...interface{}) {
 // defaults to false.
 func (l *Logger) Debug(tags Tags, format string, v ...interface{}) {
 	if l.ShowDebug {
-		l.logs <- Msg{time.Now(), "DEBUG", tags, fmt.Sprintf(format, v...)}
+		l.logs <- Msg{"DEBUG", fmt.Sprintf(format, v...), tags, time.Now()}
 	}
 }
 
@@ -219,7 +211,7 @@ func (l *Logger) Debug(tags Tags, format string, v ...interface{}) {
 // If a function is being suspected of being dead (not used) in production, add
 // a call to Thumbstone and check the production logs to see if you're right.
 func (l *Logger) Thumbstone(item string) {
-	l.logs <- Msg{time.Now(), "THUMB", Tags{"thumbstone"}, item}
+	l.logs <- Msg{"THUMB", item, Tags{"thumbstone"}, time.Now()}
 }
 
 // Close blocks until all logs are written to the writer. It will call Flush()
