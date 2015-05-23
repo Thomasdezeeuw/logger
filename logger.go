@@ -21,6 +21,10 @@ import (
 	"time"
 )
 
+const (
+	defaultLogsSize  = 1024
+)
+
 // MsgWriter takes a msg and writes it to the output.
 type MsgWriter interface {
 	WriteMsg(Msg) (int, error)
@@ -255,18 +259,15 @@ func (l *Logger) Close() error {
 }
 
 // New creates a new logger, which starts a go routine which writes to the
-// writer. This way the main thread won't be blocked.
-//
-// Name is the name of the logger used in getting (via Get) from any location.
-// The size is the buffer size in number of log item, generally 1000 should
-// suffice. But once the buffer is full log operations will block when called.
+// writer. This way the main thread won't be blocked. Name is the name of the
+// logger used in getting (via Get) from any location within your code.
 //
 // Note: because the logging isn't done on the main thread it's possible that
 // the program will close before all the log items are written to the writer.
 // It is required to call logger.Close before closing down the program!
 // Otherwise logs might be lost!
-func New(name string, size int, w io.Writer) (*Logger, error) {
-	log, err := newLogger(name, size, w)
+func New(name string, w io.Writer) (*Logger, error) {
+	log, err := newLogger(name, w)
 	if err != nil {
 		return nil, err
 	}
@@ -299,9 +300,9 @@ func New(name string, size int, w io.Writer) (*Logger, error) {
 // NewMsgWriter creates a new logger, similar to New but with a message writer.
 // A message writer takes a Msg, which is usefull for writer which don't write
 // to a text output.
-func NewMsgWriter(name string, size int, w MsgWriter) (*Logger, error) {
+func NewMsgWriter(name string, w MsgWriter) (*Logger, error) {
 	// Create a regular logger with nil as an io.Writer
-	log, err := newLogger(name, size, nil)
+	log, err := newLogger(name, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -336,7 +337,7 @@ func NewMsgWriter(name string, size int, w MsgWriter) (*Logger, error) {
 
 // NewFile creates a new logger that logs to a file, it uses bufio to buffer
 // the writes.
-func NewFile(name, path string, size int) (*Logger, error) {
+func NewFile(name, path string) (*Logger, error) {
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		return nil, err
@@ -345,7 +346,7 @@ func NewFile(name, path string, size int) (*Logger, error) {
 	// Create a new writer that writes and flushes the bufio.Writer, but closed
 	// the os.File.
 	w := &fileWriter{bufio.NewWriter(file), file}
-	return New(name, size, w)
+	return New(name, w)
 }
 
 // Get gets a logger by its name.
@@ -360,12 +361,12 @@ func Get(name string) (*Logger, error) {
 
 // Combine combines multiple loggers. It's advised to use the same size for all
 // loggers.
-func Combine(name string, size int, logs ...*Logger) (*Logger, error) {
+func Combine(name string, logs ...*Logger) (*Logger, error) {
 	if len(logs) == 0 {
 		return nil, errors.New("logger: Combine requires atleast one logger")
 	}
 
-	log, err := newLogger(name, size, nil)
+	log, err := newLogger(name, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -418,7 +419,7 @@ func Combine(name string, size int, logs ...*Logger) (*Logger, error) {
 
 // newLogger creates a new logger and add it to the loggers map. It only
 // returns an error if the name is already used.
-func newLogger(name string, size int, w io.Writer) (*Logger, error) {
+func newLogger(name string, w io.Writer) (*Logger, error) {
 	if _, ok := loggers[name]; ok {
 		return nil, errors.New("logger: name " + name + " already taken")
 	}
@@ -426,7 +427,7 @@ func newLogger(name string, size int, w io.Writer) (*Logger, error) {
 	log := &Logger{
 		Name:   name,
 		w:      w,
-		logs:   make(chan Msg, size),
+		logs:   make(chan Msg, defaultLogsSize),
 		closed: make(chan error), // needs to block!
 	}
 

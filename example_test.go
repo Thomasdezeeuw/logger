@@ -18,7 +18,7 @@ func ExampleTags() {
 }
 
 func ExampleLogger_Fatal() {
-	log, _ := New("App", 1024, os.Stdout)
+	log, _ := New("App", os.Stdout)
 	defer func() {
 		if recv := recover(); recv != nil {
 			log.Fatal(Tags{"file.go", "main"}, recv)
@@ -37,7 +37,7 @@ func ExampleLogger_Fatal() {
 }
 
 func ExampleLogger_Error() {
-	log, _ := New("App", 1024, os.Stdout)
+	log, _ := New("App", os.Stdout)
 	err := errors.New("Some error")
 	log.Error(Tags{"file.go", "main"}, err)
 	// Logs:
@@ -45,14 +45,14 @@ func ExampleLogger_Error() {
 }
 
 func ExampleLogger_Info() {
-	log, _ := New("App", 1024, os.Stdout)
+	log, _ := New("App", os.Stdout)
 	log.Info(Tags{"file.go", "main"}, "my %s message", "info")
 	// Logs:
 	// 2015-03-01 17:20:52 [INFO ] file.go, main: My info message
 }
 
 func ExampleLogger_Debug() {
-	log, _ := New("App", 1024, os.Stdout)
+	log, _ := New("App", os.Stdout)
 	log.Debug(Tags{"file.go", "main"}, "my %s message", "debug")
 	// Logs:
 	// 2015-03-01 17:20:52 [DEBUG] file.go, main: My debug message
@@ -60,7 +60,7 @@ func ExampleLogger_Debug() {
 
 func ExampleGet() {
 	// First create a logger, for example in the main init function.
-	_, err := NewFile("File", "./application.log", 1024)
+	_, err := NewFile("File", "./application.log")
 	if err != nil {
 		panic(err)
 	}
@@ -74,8 +74,7 @@ func ExampleGet() {
 }
 
 func ExampleCombine() {
-	bufSize := 1024
-	fileLog, err := NewFile("File", "./application.log", bufSize)
+	fileLog, err := NewFile("File", "./application.log")
 	if err != nil {
 		panic(err)
 	}
@@ -83,7 +82,7 @@ func ExampleCombine() {
 	var logs []*Logger
 	if production := true; !production {
 		// In none production env add a logger to stdout.
-		stdLog, err := New("Stdout", bufSize, os.Stdout)
+		stdLog, err := New("Stdout", os.Stdout)
 		if err != nil {
 			panic(err)
 		}
@@ -94,7 +93,7 @@ func ExampleCombine() {
 	}
 
 	// Then combine them to log to the stdout and a file.
-	log, err := Combine("App", bufSize, logs...)
+	log, err := Combine("App", logs...)
 	if err != nil {
 		panic(err)
 	}

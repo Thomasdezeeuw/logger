@@ -120,26 +120,25 @@ func TestNewLogger(t *testing.T) {
 	defer reset()
 	var buf bytes.Buffer
 	name := "Test"
-	size := 1024
-	log, err := newLogger(name, size, &buf)
+	log, err := newLogger(name, &buf)
 	if err != nil {
 		t.Fatal("Unexpected error, creating logger: " + err.Error())
 	}
 
 	if log.Name != name {
 		t.Errorf("Expected newLogger(%q, %d, %v) to have name %q, but got %q",
-			name, size, buf, name, log.Name)
+			name, buf, name, log.Name)
 	}
 
 	storedLogger, ok := loggers[name]
 	if !ok {
 		t.Errorf("Expected newLogger(%q, %d, %v) to store the logger in the "+
-			"loggers map, but it didn't", name, size, buf)
+			"loggers map, but it didn't", name, buf)
 	}
 
 	if log != storedLogger {
 		t.Errorf("Expected newLogger(%q, %d, %v) to store the logger and return "+
-			"the same logger, but it didn't", name, size, buf)
+			"the same logger, but it didn't", name, buf)
 	}
 }
 
@@ -147,13 +146,12 @@ func TestNewLoggerExisting(t *testing.T) {
 	defer reset()
 	var buf bytes.Buffer
 	name := "Test"
-	size := 1024
-	_, err := newLogger(name, size, &buf)
+	_, err := newLogger(name, &buf)
 	if err != nil {
 		t.Fatal("Unexpected error, creating logger: " + err.Error())
 	}
 
-	_, err = newLogger(name, size, &buf)
+	_, err = newLogger(name, &buf)
 	if err == nil {
 		t.Fatal("Expected an error creating a logger with the same name a " +
 			"second time, but didn't get one")
@@ -171,8 +169,7 @@ func TestLogger(t *testing.T) {
 	defer reset()
 	var buf bytes.Buffer
 	name := "Test"
-	size := 1024
-	log, err := New(name, size, &buf)
+	log, err := New(name, &buf)
 	if err != nil {
 		t.Fatal("Unexpected error, creating a logger: " + err.Error())
 	}
@@ -223,8 +220,7 @@ func TestLogger2(t *testing.T) {
 	defer reset()
 	var buf bytes.Buffer
 	name := "Test"
-	size := 1024
-	log, err := New(name, size, &buf)
+	log, err := New(name, &buf)
 	if err != nil {
 		t.Fatal("Unexpected error, creating a logger: " + err.Error())
 	}
@@ -276,8 +272,7 @@ func TestLoggerFatal(t *testing.T) {
 	defer reset()
 	var buf bytes.Buffer
 	name := "Test"
-	size := 1024
-	log, err := New(name, size, &buf)
+	log, err := New(name, &buf)
 	if err != nil {
 		t.Fatal("Unexpected error, creating a logger: " + err.Error())
 	}
@@ -318,8 +313,7 @@ func TestLoggerFatal2(t *testing.T) {
 	defer reset()
 	var buf bytes.Buffer
 	name := "Test"
-	size := 1024
-	log, err := New(name, size, &buf)
+	log, err := New(name, &buf)
 	if err != nil {
 		t.Fatal("Unexpected error, creating a logger: " + err.Error())
 	}
@@ -360,8 +354,7 @@ func TestGet(t *testing.T) {
 	defer reset()
 	var buf bytes.Buffer
 	name := "Test"
-	size := 1024
-	log, err := newLogger(name, size, &buf)
+	log, err := newLogger(name, &buf)
 	if err != nil {
 		t.Fatal("Unexpected error, creating a logger: " + err.Error())
 	}
@@ -419,8 +412,7 @@ func TestNewMsgWriter(t *testing.T) {
 	defer reset()
 	buf := msgWriter{}
 	name := "Test"
-	size := 1024
-	log, err := NewMsgWriter(name, size, &buf)
+	log, err := NewMsgWriter(name, &buf)
 	if err != nil {
 		t.Fatal("Unexpected error, creating a logger: " + err.Error())
 	}
@@ -451,13 +443,12 @@ func TestNewMsgWriterExisting(t *testing.T) {
 	defer reset()
 	buf := msgWriter{}
 	name := "Test"
-	size := 1024
-	log, err := NewMsgWriter(name, size, &buf)
+	log, err := NewMsgWriter(name, &buf)
 	if err != nil {
 		t.Fatal("Unexpected error, when create a new logger: " + err.Error())
 	}
 
-	_, err = NewMsgWriter(name, size, &buf)
+	_, err = NewMsgWriter(name, &buf)
 	if err == nil {
 		t.Fatal("Expected an error when creating a logger with the same name a " +
 			"second time, but didn't get one")
@@ -479,8 +470,7 @@ func TestNew(t *testing.T) {
 	defer reset()
 	var buf bytes.Buffer
 	name := "Test"
-	size := 1024
-	log, err := New(name, size, &buf)
+	log, err := New(name, &buf)
 	if err != nil {
 		t.Fatal("Unexpected error, creating a logger: " + err.Error())
 	}
@@ -511,13 +501,12 @@ func TestNewExisting(t *testing.T) {
 	defer reset()
 	var buf bytes.Buffer
 	name := "Test"
-	size := 1024
-	log, err := New(name, size, &buf)
+	log, err := New(name, &buf)
 	if err != nil {
 		t.Fatal("Unexpected error, when create a new logger: " + err.Error())
 	}
 
-	_, err = New(name, size, &buf)
+	_, err = New(name, &buf)
 	if err == nil {
 		t.Fatal("Expected an error when creating a logger with the same name a " +
 			"second time, but didn't get one")
@@ -544,8 +533,7 @@ func TestNewFile(t *testing.T) {
 		}
 	}()
 	name := "Test"
-	size := 1024
-	log, err := NewFile(name, path, size)
+	log, err := NewFile(name, path)
 	if err != nil {
 		t.Fatal("Unexpected error, creating a file logger: " + err.Error())
 	}
@@ -581,17 +569,16 @@ func TestCombine(t *testing.T) {
 	defer reset()
 	var buf1, buf2 bytes.Buffer
 	name := "Test"
-	size := 1024
-	log1, err := New(name+"1", size, &buf1)
+	log1, err := New(name+"1", &buf1)
 	if err != nil {
 		t.Fatal("Unexpected error, creating a logger: " + err.Error())
 	}
-	log2, err := New(name+"2", size, &buf2)
+	log2, err := New(name+"2", &buf2)
 	if err != nil {
 		t.Fatal("Unexpected error, creating a logger: " + err.Error())
 	}
 
-	log, err := Combine(name, size, log1, log2)
+	log, err := Combine(name, log1, log2)
 	if err != nil {
 		t.Fatal("Unexpected error, combining two loggers: " + err.Error())
 	}
@@ -638,17 +625,16 @@ func TestCombineExistingName(t *testing.T) {
 	defer reset()
 	var buf1, buf2 bytes.Buffer
 	name := "Test"
-	size := 1024
-	log1, err := New(name, size, &buf1)
+	log1, err := New(name, &buf1)
 	if err != nil {
 		t.Fatal("Unexpected error, creating a logger: " + err.Error())
 	}
-	log2, err := New(name+"2", size, &buf2)
+	log2, err := New(name+"2", &buf2)
 	if err != nil {
 		t.Fatal("Unexpected error, creating a logger: " + err.Error())
 	}
 
-	_, err = Combine(name, size, log1, log2)
+	_, err = Combine(name, log1, log2)
 	if err == nil {
 		t.Fatal("Expected error, but didn't get one")
 	}
@@ -664,8 +650,7 @@ func TestCombineExistingName(t *testing.T) {
 func TestCombineNone(t *testing.T) {
 	defer reset()
 	name := "Test"
-	size := 1024
-	_, err := Combine(name, size)
+	_, err := Combine(name)
 	if err == nil {
 		t.Fatal("Expected error, but didn't get one")
 	}
