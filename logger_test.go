@@ -391,7 +391,7 @@ type msgWriter struct {
 	buf string
 }
 
-func (mw *msgWriter) WriteMsg(msg Msg) error {
+func (mw *msgWriter) Write(msg Msg) error {
 	mw.buf += msg.String()
 	return nil
 }

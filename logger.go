@@ -37,7 +37,7 @@ const (
 
 // MsgWriter takes a msg and writes it to the output.
 type MsgWriter interface {
-	WriteMsg(Msg) error
+	Write(Msg) error
 }
 
 // FileWriter is an struct used in closing the underlying file if using a
@@ -327,7 +327,7 @@ func NewMsgWriter(name string, w MsgWriter) (*Logger, error) {
 		var errors []error
 
 		for msg := range log.logs {
-			err := log.wMsg.WriteMsg(msg)
+			err := log.wMsg.Write(msg)
 			if err != nil {
 				errors = append(errors, err)
 			}
