@@ -53,34 +53,6 @@ func TestItoa(t *testing.T) {
 	}
 }
 
-var tagTests = []struct {
-	tags     Tags
-	expected string
-}{
-	{Tags{}, ""},
-	{Tags{"tag1"}, "tag1"},
-	{Tags{"tag1", "tag2"}, "tag1, tag2"},
-	{Tags{"tag1", "tag2", "tag3"}, "tag1, tag2, tag3"},
-}
-
-func TestTagsBytes(t *testing.T) {
-	for _, test := range tagTests {
-		if got := string(test.tags.Bytes()); got != test.expected {
-			t.Errorf("Expected Tags{%v}.Bytes() to return %q, got %q",
-				test.tags, test.expected, got)
-		}
-	}
-}
-
-func TestTagsString(t *testing.T) {
-	for _, test := range tagTests {
-		if got := test.tags.String(); got != test.expected {
-			t.Errorf("Expected Tags{%v}.String() to return %q, got %q",
-				test.tags, test.expected, got)
-		}
-	}
-}
-
 var now = time.Now()
 var tStr = now.Format("2006-01-02 15:04:05")
 
