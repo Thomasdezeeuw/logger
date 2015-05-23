@@ -21,7 +21,7 @@ type sqlWriter struct {
 	query *sql.Stmt
 }
 
-func (sql *sqlWriter) WriteMsg(msg logger.Msg) (int, error) {
+func (sql *sqlWriter) WriteMsg(msg logger.Msg) error {
 	_, err := sql.query.Exec(msg.Timestamp, msg.Level, msg.Tags, msg.Msg)
 	if err != nil {
 		// It might be usefull to have some sort of backup log, like a file or
@@ -29,7 +29,7 @@ func (sql *sqlWriter) WriteMsg(msg logger.Msg) (int, error) {
 		// good testing).
 		log.Error(logger.Tags{"sql.go", "sqlWriter.Write"}, err)
 	}
-	return 0, err
+	return err
 }
 
 var log *logger.Logger

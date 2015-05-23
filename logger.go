@@ -36,7 +36,7 @@ const (
 
 // MsgWriter takes a msg and writes it to the output.
 type MsgWriter interface {
-	WriteMsg(Msg) (int, error)
+	WriteMsg(Msg) error
 }
 
 // Flusher interface to check if the writer can flush.
@@ -312,7 +312,7 @@ func NewMsgWriter(name string, w MsgWriter) (*Logger, error) {
 		var errors []error
 
 		for msg := range log.logs {
-			_, err := log.wMsg.WriteMsg(msg)
+			err := log.wMsg.WriteMsg(msg)
 			if err != nil {
 				errors = append(errors, err)
 			}
