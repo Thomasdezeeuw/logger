@@ -121,7 +121,7 @@ func (msg *Msg) Bytes() []byte {
 	buf = append(buf, ' ')
 
 	// Write the level.
-	// Format: "[LEVEL] " (levle is always 5 characters long).
+	// Format: "[LEVEL] " (level is always 5 characters long).
 	buf = append(buf, '[')
 	buf = append(buf, msg.Level...)
 	buf = append(buf, ']')
@@ -140,30 +140,26 @@ func (msg *Msg) Bytes() []byte {
 	return buf
 }
 
-// Collection of all created logger by name, used by the Get function.
+// Collection of all created loggers by name, used by the Get function.
 var loggers = map[string]*Logger{}
 
-// The Logger is an logging object which logs to an io.Writer where each Write
-// call is a single log item. Each logging operation makes a single call to the
-// Writer's Write method, but not necessarily at the same time a Log operation
-// (Fatal, Error etc.) is called. A Logger can be used simultaneously from
-// multiple goroutines, it guarantees to serialize access to the Writer.
-// Messages will always be in the following format:
+// The Logger is an logging object which logs to an io.Writer or MsgWriter.
+// Each logging operation makes a single call to the Writer's Write method, but
+// not necessarily at the same time a Log operation is called. A Logger can be
+// used simultaneously from multiple goroutines, it guarantees to serialize
+// access to the Writer. Messages (for the io.Writer) will always be in the
+// following format (where level is always 5 characters long):
 //	YYYY-MM-DD HH:MM:SS [LEVEL] tag1, tag2...: message
 //
 // There are four different log levels (from higher to lower): Fatal, Error,
 // Info and Debug, aswell as Thumbstone which is a special case. Thumbstone is
-// used for testing if a function is used in production.
+// used for testing if a function is called in production.
 //
 // Note: Log operations (Fatal, Error etc.) don't instally write to the
 // io.Writer, before closing the program call Logger.Close to ensure that all
-// log items are written to the io.Writer.
+// log operations are written to the io.Writer or MsgWriter.
 type Logger struct {
-	// Name of the logger, used in getting the logger.
-	Name string
-
-	// Wether or not to show debug log statements, should really only be set on
-	// creating of the logger.
+	Name      string
 	ShowDebug bool
 
 	// The writers where the items are written to. Either w or wMsg is used, the
