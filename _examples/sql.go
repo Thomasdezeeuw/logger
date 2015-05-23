@@ -32,6 +32,10 @@ func (sql *sqlWriter) Write(msg logger.Msg) error {
 	return err
 }
 
+func (sql *sqlWriter) Close() error {
+	return sql.Close()
+}
+
 var log *logger.Logger
 
 func init() {
