@@ -2,8 +2,6 @@
 //
 // Licensed onder the MIT license that can be found in the LICENSE file.
 
-// TODO: DRY New, NewMsgWriter & Combine functions.
-
 // Package logger provides multiple ways to log information of different level
 // of importance. No default logger is created, but Get is provided to get any
 // logger at any location. See the provided examples, both in the documentation
@@ -21,17 +19,7 @@ import (
 	"time"
 )
 
-const (
-	defaultStackSize  = 4096
-	defaultLogsSize   = 1024
-	defaultErrorsSize = 10
-)
-
-const (
-	fileFlag       = os.O_CREATE | os.O_APPEND | os.O_WRONLY
-	filePermission = 0644
-)
-
+// The log operation levels.
 const (
 	FatalLevel = "FATAL"
 	ErrorLevel = "ERROR"
@@ -40,22 +28,20 @@ const (
 	ThumbLevel = "THUMB"
 )
 
+const (
+	defaultStackSize = 4096
+	defaultLogsSize  = 1024
+)
+
+const (
+	fileFlag       = os.O_CREATE | os.O_APPEND | os.O_WRONLY
+	filePermission = 0644
+)
+
 // MsgWriter takes a msg and writes it to the output.
 type MsgWriter interface {
 	Write(Msg) error
 	Close() error
-}
-
-// FileWriter is an struct used in closing the underlying file if using a
-// buffered writer.
-type fileWriter struct {
-	*bufio.Writer
-	f *os.File
-}
-
-// Close calls Close on the underlying os.File.
-func (w *fileWriter) Close() error {
-	return w.f.Close()
 }
 
 // Collection of all created loggers by name, used by the Get function.
@@ -79,18 +65,10 @@ var loggers = map[string]*Logger{}
 type Logger struct {
 	Name      string
 	ShowDebug bool
-
-	// The writers where the items are written to. Either w or wMsg is used, the
-	// one not used should be nil.
-	w    io.Writer
-	wMsg MsgWriter
-
-	// The log messages channel, it's used for actually writing the messages.
-	logs chan Msg
-
-	// Indicating the writer closed, having a possible flush or close error.
-	// todo: how to expose these errors?!
-	errors chan []error
+	Errors    []error
+	mw        MsgWriter
+	logs      chan Msg
+	closed    chan struct{}
 }
 
 // Fatal logs a recovered error which could have killed the program.
@@ -142,126 +120,89 @@ func (l *Logger) Thumbstone(item string) {
 	l.logs <- Msg{ThumbLevel, item, Tags{"thumbstone"}, time.Now()}
 }
 
-// Close blocks until all logs are written to the writer. It will call Flush()
-// and Close() on the writer if supported. If either of the functions returns
-// an error it will be returned by this function (Flush error first).
+// Close blocks until all logs are written to the writer. After all logs are
+// written it will call Close() on the message writer.
 //
 // Note: if a log operation is called after Close is called it will panic.
 func (l *Logger) Close() error {
-	type flusher interface {
-		Flush() error
-	}
-
 	close(l.logs)
-	errors := <-l.errors
-
-	// Either try to flush the io writer or the message writer. Also try to close
-	// the writer.
-	// TODO: improve thise code.
-	var err error
-	if l.w != nil {
-		if fw, ok := l.w.(flusher); ok {
-			err = fw.Flush()
-		}
-		if cw, ok := l.w.(io.Closer); ok {
-			if closeErr := cw.Close(); err == nil {
-				err = closeErr
-			}
-		}
-	} else {
-		if fw, ok := l.wMsg.(flusher); ok {
-			err = fw.Flush()
-		}
-		if cw, ok := l.wMsg.(io.Closer); ok {
-			if closeErr := cw.Close(); err == nil {
-				err = closeErr
-			}
-		}
+	<-l.closed
+	if l.mw != nil {
+		return l.mw.Close()
 	}
-
-	if err == nil && len(errors) >= 1 {
-		err = errors[0]
-	}
-
-	return err
+	return nil
 }
 
 // New creates a new logger, which starts a go routine which writes to the
-// writer. This way the main thread won't be blocked. Name is the name of the
-// logger used in getting (via Get) from any location within your code.
+// message writer, this way the main thread won't be blocked. Name is the name
+// of the logger, used in getting the logger, via Get, from any location within
+// your code. The logger is thread same and won't block, unless the message
+// channel buffer is full.
 //
-// Note: because the logging isn't done on the main thread it's possible that
-// the program will close before all the log items are written to the writer.
-// It is required to call logger.Close before closing down the program!
-// Otherwise logs might be lost!
-func New(name string, w io.Writer) (*Logger, error) {
-	log, err := newLogger(name, w)
+// Because the logging isn't done on the main thread it's possible that the
+// program will close before all the log items are written to the writer. It is
+// required to call logger.Close before closing down the program! Otherwise
+// logs might be lost!
+//
+// After calling logger.Close log.Errors can be accessed to check for any
+// writing errors.
+func New(name string, mw MsgWriter) (*Logger, error) {
+	log, err := new(name, mw)
 	if err != nil {
 		return nil, err
 	}
 
-	go func(log *Logger) {
-		var errors []error
-
-		for msg := range log.logs {
-			_, err := log.w.Write(msg.Bytes())
-			if err != nil {
-				errors = append(errors, err)
-			}
-		}
-
-		log.errors <- errors
-	}(log)
-
+	go logWriter(log)
 	return log, nil
 }
 
-// NewMsgWriter creates a new logger, similar to New but with a message writer.
-// A message writer takes a Msg, which is usefull for writer which don't write
-// to a text output.
-func NewMsgWriter(name string, w MsgWriter) (*Logger, error) {
-	// Create a regular logger with nil as an io.Writer
-	log, err := newLogger(name, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	// Then set our message writer.
-	log.wMsg = w
-
-	go func(log *Logger) {
-		var errors []error
-
-		for msg := range log.logs {
-			err := log.wMsg.Write(msg)
-			if err != nil {
-				errors = append(errors, err)
-			}
-		}
-
-		err := log.wMsg.Close()
-		if err != nil {
-			errors = append(errors, err)
-		}
-
-		log.errors <- errors
-	}(log)
-
-	return log, nil
+type fileMsgWriter struct {
+	w *bufio.Writer
+	f *os.File
 }
 
-// NewFile creates a new logger that logs to a file, it uses bufio to buffer
-// the writes.
+func (fw *fileMsgWriter) Write(msg Msg) error {
+	_, err := fw.w.Write(msg.Bytes())
+	return err
+}
+
+func (fw *fileMsgWriter) Close() error {
+	// todo: handle flushing error.
+	fw.w.Flush()
+	return fw.f.Close()
+}
+
+// NewFile creates a new logger that writes to a file.
 func NewFile(name, path string) (*Logger, error) {
-	file, err := os.OpenFile(path, fileFlag, filePermission)
+	f, err := os.OpenFile(path, fileFlag, filePermission)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create a new writer that writes and flushes the bufio.Writer, but closed
-	// the os.File.
-	w := &fileWriter{bufio.NewWriter(file), file}
-	return New(name, w)
+	mw := &fileMsgWriter{bufio.NewWriter(f), f}
+	return New(name, mw)
+}
+
+type ioWriterMsgWriter struct {
+	w io.Writer
+}
+
+func (iw *ioWriterMsgWriter) Write(msg Msg) error {
+	_, err := iw.w.Write(msg.Bytes())
+	return err
+}
+
+func (iw *ioWriterMsgWriter) Close() error {
+	return nil
+}
+
+// Error ouput, usefull for testing.
+var stderr io.Writer = os.Stderr
+
+// NewConsole creates a new logger that writes to error output (os.Stderr).
+func NewConsole(name string) (*Logger, error) {
+	mw := &ioWriterMsgWriter{stderr}
+	return New(name, mw)
 }
 
 // Get gets a logger by its name.
@@ -270,71 +211,78 @@ func Get(name string) (*Logger, error) {
 	if !ok {
 		return nil, errors.New("logger: no logger found with name " + name)
 	}
-
 	return log, nil
 }
 
-// Combine combines multiple loggers.
-//
-// todo: provide usefull example, using Stdout in development (with Debug
-// enabled) and only to a file in production.
+// Combine combines multiple loggers into a single logger.
 func Combine(name string, logs ...*Logger) (*Logger, error) {
 	if len(logs) == 0 {
 		return nil, errors.New("logger: Combine requires atleast one logger")
 	}
 
-	log, err := newLogger(name, nil)
+	log, err := new(name, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	go func(log *Logger, logs []*Logger) {
-		var errors []error
-
-		// Relay our messages to the other loggers.
-		for msg := range log.logs {
-			for _, l := range logs {
-				l.logs <- msg
-			}
-		}
-
-		errChan := make(chan error, 5)
-
-		// Close all underlying loggers.
-		for _, log := range logs {
-			go func(log *Logger) {
-				errChan <- log.Close()
-			}(log)
-		}
-
-		// Wait for all underlying loggers to respond.
-		for i := len(logs); i > 0; i-- {
-			err := <-errChan
-			if err != nil {
-				errors = append(errors, err)
-			}
-		}
-
-		log.errors <- errors
-	}(log, logs)
-
+	go combinedLogWriter(log, logs)
 	return log, nil
 }
 
-// newLogger creates a new logger and add it to the loggers map. It only
-// returns an error if the name is already used.
-func newLogger(name string, w io.Writer) (*Logger, error) {
+func new(name string, mw MsgWriter) (*Logger, error) {
 	if _, ok := loggers[name]; ok {
 		return nil, errors.New("logger: name " + name + " already taken")
 	}
 
 	log := &Logger{
 		Name:   name,
-		w:      w,
+		mw:     mw,
 		logs:   make(chan Msg, defaultLogsSize),
-		errors: make(chan []error, defaultErrorsSize),
+		closed: make(chan struct{}, 1), // Can't block.
+	}
+	loggers[name] = log
+
+	return log, nil
+}
+
+func logWriter(log *Logger) {
+	for msg := range log.logs {
+		if err := log.mw.Write(msg); err != nil {
+			log.Errors = append(log.Errors, err)
+		}
 	}
 
-	loggers[name] = log
-	return log, nil
+	log.closed <- struct{}{}
+}
+
+func combinedLogWriter(log *Logger, logs []*Logger) {
+	j := len(logs)
+	for msg := range log.logs {
+		for i := 0; i < j; i++ {
+			logs[i].logs <- msg
+		}
+	}
+
+	// Close all underlying loggers.
+	errChan := make(chan error, len(logs))
+	for _, log := range logs {
+		go func(log *Logger) {
+			errChan <- log.Close()
+		}(log)
+	}
+
+	// Wait for all underlying loggers to respond.
+	for i := len(logs); i > 0; i-- {
+		err := <-errChan
+		if err != nil {
+			log.Errors = append(log.Errors, err)
+		}
+	}
+
+	// Add all underlying errors to the top one.
+	for i := 0; i < j; i++ {
+		log.Errors = append(log.Errors, logs[i].Errors...)
+	}
+
+	log.closed <- struct{}{}
 }
