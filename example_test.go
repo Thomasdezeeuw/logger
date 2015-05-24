@@ -7,18 +7,29 @@ package logger
 import (
 	"errors"
 	"fmt"
-	"os"
+	"time"
 )
 
 func ExampleTags() {
 	tags := Tags{"tag1", "tag2"}
 	fmt.Print(tags.String())
-	// Prints:
+	// Output:
 	// tag1, tag2
 }
 
+func ExampleMsg() {
+	msg := Msg{"ERROR", "My message", Tags{"tag1", "tag2"}, time.Now()}
+	fmt.Print(msg.String())
+	// Prints:
+	// 2015-05-24 17:39:50 [ERROR] tag1, tag2: My message
+}
+
 func ExampleLogger_Fatal() {
-	log, _ := New("App", os.Stdout)
+	log, err := NewConsole("App")
+	if err != nil {
+		panic(err)
+	}
+
 	defer func() {
 		if recv := recover(); recv != nil {
 			log.Fatal(Tags{"file.go", "main"}, recv)
@@ -37,22 +48,34 @@ func ExampleLogger_Fatal() {
 }
 
 func ExampleLogger_Error() {
-	log, _ := New("App", os.Stdout)
-	err := errors.New("Some error")
+	log, err := NewConsole("App")
+	if err != nil {
+		panic(err)
+	}
+
+	err = errors.New("Some error")
 	log.Error(Tags{"file.go", "main"}, err)
 	// Logs:
 	// 2015-03-01 17:20:52 [ERROR] file.go, main: Some error
 }
 
 func ExampleLogger_Info() {
-	log, _ := New("App", os.Stdout)
+	log, err := NewConsole("App")
+	if err != nil {
+		panic(err)
+	}
+
 	log.Info(Tags{"file.go", "main"}, "my %s message", "info")
 	// Logs:
 	// 2015-03-01 17:20:52 [INFO ] file.go, main: My info message
 }
 
 func ExampleLogger_Debug() {
-	log, _ := New("App", os.Stdout)
+	log, err := NewConsole("App")
+	if err != nil {
+		panic(err)
+	}
+
 	log.Debug(Tags{"file.go", "main"}, "my %s message", "debug")
 	// Logs:
 	// 2015-03-01 17:20:52 [DEBUG] file.go, main: My debug message
@@ -60,43 +83,17 @@ func ExampleLogger_Debug() {
 
 func ExampleGet() {
 	// First create a logger, for example in the main init function.
-	_, err := NewFile("File", "./application.log")
+	log1, err := NewConsole("App")
 	if err != nil {
 		panic(err)
 	}
 
 	// Then get the logger somewhere else.
-	log, err := Get("File")
-	if err != nil {
-		panic(err)
-	}
-	log.Info(Tags{"file.go", "main"}, "Written to application.log")
-}
-
-func ExampleCombine() {
-	fileLog, err := NewFile("File", "./application.log")
+	log2, err := Get("App")
 	if err != nil {
 		panic(err)
 	}
 
-	var logs []*Logger
-	if production := true; !production {
-		// In none production env add a logger to stdout.
-		stdLog, err := New("Stdout", os.Stdout)
-		if err != nil {
-			panic(err)
-		}
-
-		logs = []*Logger{fileLog, stdLog}
-	} else {
-		logs = []*Logger{fileLog}
-	}
-
-	// Then combine them to log to the stdout and a file.
-	log, err := Combine("App", logs...)
-	if err != nil {
-		panic(err)
-	}
-
-	log.Info(Tags{"file.go", "main"}, "Written to application.log and stdout")
+	log1.Info(Tags{"main"}, "Both these messages")
+	log2.Info(Tags{"main"}, "are writting to the same logger")
 }

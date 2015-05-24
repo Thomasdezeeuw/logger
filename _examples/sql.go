@@ -15,55 +15,55 @@ import (
 // SQL Logs table:
 // id 		INT AUTO_INCREMENT
 // date		DATETIME
-// level	ENUM("FATAL", "ERROR", "INFO", "DEBUG")
+// level	ENUM("FATAL", "ERROR", "INFO", "DEBUG", "THUMB")
 // tags		VARCHAR
 // msg		VARCHAR
 
 var queryStr = "INSERT INTO Logs (date, level, tags, msg) VALUES (?, ?, ?, ?)"
 
-type sqlWriter struct {
+type sqlMsgWriter struct {
 	query *sql.Stmt
 }
 
-func (sql *sqlWriter) Write(msg logger.Msg) error {
-	_, err := sql.query.Exec(msg.Timestamp, msg.Level, msg.Tags, msg.Msg)
+func (sql *sqlMsgWriter) Write(msg logger.Msg) error {
+	_, err := sql.query.Exec(msg.Timestamp, msg.Level, msg.Tags.String(), msg.Msg)
 	if err != nil {
 		// It might be usefull to have some sort of backup log, like a file or
 		// stdout to catch these kind of errors (altough they should be caught with
-		// good testing).
-		log.Error(logger.Tags{"sql.go", "sqlWriter.Write"}, err)
+		// good testing and a dependable database).
+		log.Error(logger.Tags{"sql.go", "sqlMsgWriter.Write"}, err)
 	}
 	return err
 }
 
-func (sql *sqlWriter) Close() error {
-	return sql.Close()
+func (sql *sqlMsgWriter) Close() error {
+	return sql.query.Close()
 }
 
 var log *logger.Logger
 
 func init() {
 	// Connect to the database.
-	db, err := sql.Open("mysql", "test:password@tcp(127.0.0.1:3306)/test")
+	db, err := sql.Open("mysql", "test:7Eg13uve@tcp(127.0.0.1:3306)/test")
 	if err != nil {
 		panic(err)
 	}
-
-	// Show debug messages.
-	log.ShowDebug = true
 
 	// Create an prepared query aswell as our log writer.
 	query, err := db.Prepare(queryStr)
 	if err != nil {
 		panic(err)
 	}
-	w := &sqlWriter{query: query}
+	mw := &sqlMsgWriter{query: query}
 
 	// Create a new logger like normal.
-	log, err = logger.NewMsgWriter("AppDB", 1024, w)
+	log, err = logger.New("AppDB", mw)
 	if err != nil {
 		panic(err)
 	}
+
+	// Show debug messages.
+	log.ShowDebug = true
 }
 
 func main() {
@@ -92,7 +92,12 @@ func main() {
 
 func doSomething(str string) error {
 	// Log an debug message.
-	log.Debug(logger.Tags{"file.go", "doSomething"}, "doSomething(%q)", str)
+	log.Debug(logger.Tags{"sql.go", "doSomething"}, "doSomething(%q)", str)
 
 	return errors.New("oops")
+}
+
+func unusedFunction() {
+	// Log thumbstone, to see if the function is used in production.
+	log.Thumbstone("unusedFunction in _examples/sql.go")
 }

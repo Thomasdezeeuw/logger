@@ -21,49 +21,35 @@ items.
 ```go
 package main
 
-import (
-	"fmt"
-	"os"
+import "github.com/Thomasdezeeuw/logger"
 
-	"github.com/Thomasdezeeuw/logger"
-)
-
-type msgWriter struct{}
-
-func (sql *msgWriter) WriteMsg(msg logger.Msg) (int, error) {
-	return fmt.Printf("%v [%s] %s: %s", msg.Timestamp, msg.Level,
-		msg.Tags.String(), msg.Msg)
-}
-
-var log *logger.Logger
-var log2 *logger.Logger
+const logName = "App"
 
 func init() {
-	var err error
-	// Setup a new logger with a name, a buffer size and an io.Writer.
-	// The name is used to logger.Get(name) the same logger later in other files
-	// or packages. The buffer size is used in the channel for log operations.
-	log, err = logger.New("Std", 1024, os.Stdout)
+	// Setup a new logger with a name and log to the console.
+	log, err := logger.NewConsole(logName)
 	if err != nil {
 		panic(err)
 	}
 
-	// Or we can create a logger with a special [MsgWriter]("https://godoc.org/github.com/Thomasdezeeuw/logger#MsgWriter").
-	w := new(msgWriter)
-	log2, err = logger.NewMsgWriter("Special", 1024, w)
-	if err != nil {
-		panic(err)
-	}
+	log.Info(logger.Tags{"init", "logger"}, "created a logger here")
 }
 
 func main() {
+	// Get a logger by its name.
+	log, err := logger.Get(logName)
+	if err != nil {
+		panic(err)
+	}
+
 	// IMPORTANT! Otherwise the file will never be written!
 	defer log.Close()
 
 	user := "Thomas"
-	tags := logger.Tags{"README.md", "main", "user"}
+	userId := "1"
+	tags := logger.Tags{"README.md", "main", "user:1" + userId}
 	log.Info(tags, "Hi %s!", user)
-	log2.Info(tags, "Hi %s!", user)
+	log.Info(logger.Tags{"main"}, "This get logged to the same logger!")
 }
 ```
 

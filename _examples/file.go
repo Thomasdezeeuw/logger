@@ -15,7 +15,7 @@ var log *logger.Logger
 func init() {
 	var err error
 	// Setup a new logger with a name, path to a file and the buffer size.
-	log, err = logger.NewFile("App", "./tmp.log", 1024)
+	log, err = logger.NewFile("App", "./tmp.log")
 	if err != nil {
 		panic(err)
 	}
@@ -61,4 +61,9 @@ func doSomething(str string) error {
 	log.Debug(logger.Tags{"file.go", "doSomething"}, "doSomething(%q)", str)
 
 	return errors.New("oops")
+}
+
+func unusedFunction() {
+	// Log thumbstone, to see if the function is used in production.
+	log.Thumbstone("unusedFunction in _examples/file.go")
 }
