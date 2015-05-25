@@ -294,6 +294,10 @@ func checkMessagesString(t1 time.Time, gotBytes []byte) error {
 		}
 	}
 
+	if err := s.Err(); err != nil {
+		return fmt.Errorf("Unexpected scanning error: %s", err.Error())
+	}
+
 	// not the prettiest solution, but good enough...
 	expected := t1Str + " [FATAL] test: Fatal message1\n"
 	expected += t1Str + " [FATAL] test: Fatal message2\n"
