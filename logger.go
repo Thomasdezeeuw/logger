@@ -141,11 +141,11 @@ func (l *Logger) Close() error {
 //
 // Because the logging isn't done on the main thread it's possible that the
 // program will close before all the log items are written to the writer. It is
-// required to call logger.Close before closing down the program! Otherwise
+// required to call logger.Close() before closing down the program! Otherwise
 // logs might be lost!
 //
-// After calling logger.Close log.Errors can be accessed to check for any
-// writing errors.
+// After calling logger.Close(), log.Errors can be accessed to check for any
+// writing errors from the log operations.
 func New(name string, mw MsgWriter) (*Logger, error) {
 	log, err := new(name, mw)
 	if err != nil {
@@ -248,6 +248,7 @@ func new(name string, mw MsgWriter) (*Logger, error) {
 	return log, nil
 }
 
+// Needs to be run in it's own goroutine, it blocks until log.logs is closed.
 func logWriter(log *Logger) {
 	for msg := range log.logs {
 		if err := log.mw.Write(msg); err != nil {
@@ -258,6 +259,7 @@ func logWriter(log *Logger) {
 	log.closed <- struct{}{}
 }
 
+// Needs to be run in it's own goroutine, it blocks until log.logs is closed.
 func combinedLogWriter(log *Logger, logs []*Logger) {
 	j := len(logs)
 	for msg := range log.logs {
