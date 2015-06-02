@@ -167,9 +167,12 @@ func (fw *fileMsgWriter) Write(msg Msg) error {
 }
 
 func (fw *fileMsgWriter) Close() error {
-	// todo: handle flushing error.
-	fw.w.Flush()
-	return fw.f.Close()
+	flushErr := fw.w.Flush()
+	err := fw.f.Close()
+	if err == nil {
+		err = flushErr
+	}
+	return err
 }
 
 // NewFile creates a new logger that writes to a file.
