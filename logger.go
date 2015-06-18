@@ -218,6 +218,9 @@ func Get(name string) (*Logger, error) {
 }
 
 // Combine combines multiple loggers into a single logger.
+//
+// Note: ShowDebug is enable by default and should be set on the individual
+// loggers.
 func Combine(name string, logs ...*Logger) (*Logger, error) {
 	if len(logs) == 0 {
 		return nil, errors.New("logger: Combine requires atleast one logger")
@@ -227,6 +230,7 @@ func Combine(name string, logs ...*Logger) (*Logger, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.ShowDebug = true
 
 	go combinedLogWriter(log, logs)
 	return log, nil
@@ -264,7 +268,10 @@ func combinedLogWriter(log *Logger, logs []*Logger) {
 	j := len(logs)
 	for msg := range log.logs {
 		for i := 0; i < j; i++ {
-			logs[i].logs <- msg
+			if msg.Level != DebugLevel ||
+				(msg.Level == DebugLevel && logs[i].ShowDebug) {
+				logs[i].logs <- msg
+			}
 		}
 	}
 

@@ -43,7 +43,7 @@ func TestNew(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := checkMessages(t1, mw); err != nil {
+	if err := checkMessages(t1, mw, true); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -153,6 +153,7 @@ func TestCombine(t *testing.T) {
 	if err != nil {
 		t.Fatal("Unexpected error, creating a new logger: " + err.Error())
 	}
+	log2.ShowDebug = true
 
 	log, err := Combine(logName, log1, log2)
 	if err != nil {
@@ -163,9 +164,9 @@ func TestCombine(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := checkMessages(t1, mw1); err != nil {
+	if err := checkMessages(t1, mw1, false); err != nil {
 		t.Fatal(err)
-	} else if err := checkMessages(t1, mw2); err != nil {
+	} else if err := checkMessages(t1, mw2, true); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -214,12 +215,12 @@ func sendMessages(log *Logger) (time.Time, error) {
 	log.Info(tags, "Info message1")
 	log.Info(tags, "Info message2")
 	log.Info(tags, "Info message3")
-	log.Debug(tags, "Debug message1")
-	log.Debug(tags, "Debug message2")
-	log.Debug(tags, "Debug message3")
 	log.Thumbstone("Thumb message1")
 	log.Thumbstone("Thumb message2")
 	log.Thumbstone("Thumb message3")
+	log.Debug(tags, "Debug message1")
+	log.Debug(tags, "Debug message2")
+	log.Debug(tags, "Debug message3")
 
 	log.ShowDebug = false
 	log.Debug(tags, "Debug message4")
@@ -232,9 +233,11 @@ func sendMessages(log *Logger) (time.Time, error) {
 }
 
 // checkMessages is linked to sendMessages.
-func checkMessages(t1 time.Time, mw *msgWriter) error {
-	if len(mw.msgs) != 15 {
-		return fmt.Errorf("Expected 15 messages, but got %d", len(mw.msgs))
+func checkMessages(t1 time.Time, mw *msgWriter, debugEnabled bool) error {
+	if nMsgs := 15; !debugEnabled {
+		nMsgs = 12
+	} else if len(mw.msgs) != nMsgs {
+		return fmt.Errorf("Expected %d messages, but got %d", nMsgs, len(mw.msgs))
 	}
 
 	tags := Tags{"test"}
@@ -247,9 +250,9 @@ func checkMessages(t1 time.Time, mw *msgWriter) error {
 		} else if i >= 6 && i < 9 {
 			expectedLevel = InfoLevel
 		} else if i >= 9 && i < 12 {
-			expectedLevel = DebugLevel
-		} else {
 			expectedLevel = ThumbLevel
+		} else {
+			expectedLevel = DebugLevel
 		}
 
 		expectedMsg := expectedLevel[:1] + strings.ToLower(expectedLevel[1:])
@@ -260,6 +263,8 @@ func checkMessages(t1 time.Time, mw *msgWriter) error {
 			msg.Msg = msg.Msg[:14] // trim stack trace from message.
 		} else if expectedLevel == ThumbLevel {
 			tags = Tags{"thumbstone"}
+		} else {
+			tags = Tags{"test"}
 		}
 
 		if msg.Level != expectedLevel {
@@ -308,12 +313,12 @@ func checkMessagesString(t1 time.Time, gotBytes []byte) error {
 	expected += t1Str + " [INFO ] test: Info message1\n"
 	expected += t1Str + " [INFO ] test: Info message2\n"
 	expected += t1Str + " [INFO ] test: Info message3\n"
-	expected += t1Str + " [DEBUG] test: Debug message1\n"
-	expected += t1Str + " [DEBUG] test: Debug message2\n"
-	expected += t1Str + " [DEBUG] test: Debug message3\n"
 	expected += t1Str + " [THUMB] thumbstone: Thumb message1\n"
 	expected += t1Str + " [THUMB] thumbstone: Thumb message2\n"
 	expected += t1Str + " [THUMB] thumbstone: Thumb message3\n"
+	expected += t1Str + " [DEBUG] test: Debug message1\n"
+	expected += t1Str + " [DEBUG] test: Debug message2\n"
+	expected += t1Str + " [DEBUG] test: Debug message3\n"
 
 	if got != expected {
 		return fmt.Errorf("Expected the log file to contain: \n%s\nbut got: \n%s",
