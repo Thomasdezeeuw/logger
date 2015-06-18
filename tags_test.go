@@ -7,6 +7,8 @@ package logger
 import "testing"
 
 func TestTags(t *testing.T) {
+	t.Parallel()
+
 	var tagTests = []struct {
 		tags     Tags
 		expected string

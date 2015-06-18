@@ -10,6 +10,8 @@ import (
 )
 
 func TestItoa(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		input    int
 		width    int
@@ -48,6 +50,8 @@ func TestItoa(t *testing.T) {
 }
 
 func TestMsg(t *testing.T) {
+	t.Parallel()
+
 	var now = time.Now()
 	var tStr = now.Format("2006-01-02 15:04:05")
 

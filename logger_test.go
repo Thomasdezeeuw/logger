@@ -32,6 +32,8 @@ func (mw *msgWriter) Close() error {
 }
 
 func TestNew(t *testing.T) {
+	t.Parallel()
+
 	const logName = "TestNew"
 	mw := &msgWriter{}
 	log, err := New(logName, mw)
@@ -49,6 +51,8 @@ func TestNew(t *testing.T) {
 }
 
 func TestNewExistingName(t *testing.T) {
+	t.Parallel()
+
 	const logName = "TestNewExistingName"
 	_, err := New(logName, &msgWriter{})
 	if err != nil {
@@ -66,6 +70,8 @@ func TestNewExistingName(t *testing.T) {
 }
 
 func TestNewFile(t *testing.T) {
+	t.Parallel()
+
 	const logName = "TestNewFile"
 	path := filepath.Join(os.TempDir(), "LOGGER_TEST.log")
 	defer os.Remove(path)
@@ -90,6 +96,8 @@ func TestNewFile(t *testing.T) {
 }
 
 func TestNewConsole(t *testing.T) {
+	t.Parallel()
+
 	var buf bytes.Buffer
 	oldStderr := stderr
 	stderr = &buf
@@ -112,6 +120,8 @@ func TestNewConsole(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
+	t.Parallel()
+
 	const logName = "TestGet"
 	log1, err := New(logName, &msgWriter{})
 	if err != nil {
@@ -129,6 +139,8 @@ func TestGet(t *testing.T) {
 }
 
 func TestGetNotFound(t *testing.T) {
+	t.Parallel()
+
 	const notLogName = "A logger which doesn't exists"
 	expectedErr := "logger: no logger found with name " + notLogName
 	_, err := Get(notLogName)
@@ -141,6 +153,8 @@ func TestGetNotFound(t *testing.T) {
 }
 
 func TestCombine(t *testing.T) {
+	t.Parallel()
+
 	const logName = "TestCombine"
 	mw1 := &msgWriter{}
 	log1, err := New(logName+"1", mw1)
@@ -172,6 +186,8 @@ func TestCombine(t *testing.T) {
 }
 
 func TestCombineNone(t *testing.T) {
+	t.Parallel()
+
 	const logName = "TestCombineNone"
 	expectedErr := "logger: Combine requires atleast one logger"
 	_, err := Combine(logName)
@@ -184,6 +200,8 @@ func TestCombineNone(t *testing.T) {
 }
 
 func TestCombineExistingName(t *testing.T) {
+	t.Parallel()
+
 	const logName = "TestCombineExistingName"
 	log, err := New(logName, &msgWriter{})
 	if err != nil {
