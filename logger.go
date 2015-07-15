@@ -29,28 +29,31 @@ type MsgWriter interface {
 // Collection of all created loggers by name, used by the Get function.
 var loggers = map[string]*Logger{}
 
-// The Logger is an logging object which logs to an io.Writer or MsgWriter.
-// Each logging operation makes a single call to the Writer's Write method, but
-// not necessarily at the same time a Log operation is called. A Logger can be
+// The Logger is an logging object which logs to a MsgWriter. Each logging
+// operation makes a single call to the Writer's Write method, but not
+// necessarily at the same time a Log operation is called. A Logger can be
 // used simultaneously from multiple goroutines, it guarantees to serialize
-// access to the Writer. Messages (for the io.Writer) will always be in the
-// following format (where level is always 5 characters long):
-//	YYYY-MM-DD HH:MM:SS [LEVEL] tag1, tag2: message
+// access to the MsgWriter.
 //
-// There are four different log levels (from higher to lower): Fatal, Error,
-// Info and Debug, aswell as Thumbstone which is a special case. Thumbstone is
-// used for testing if a function is called in production.
+// There are six different log levels (from higher to lower): Fatal, Error,
+// Warn, Info, Thumb, Debug and Trace.
 //
 // Note: Log operations (Fatal, Error etc.) don't instally write to the
-// io.Writer, before closing the application call Logger.Close to ensure that
-// all log operations are written to the io.Writer or MsgWriter.
+// MsgWriter, before closing the application call Logger.Close to ensure that
+// all log operations are written to the MsgWriter.
 type Logger struct {
-	Name      string
+	Name string
+
+	// Wether or not to write Debug and Trace logs.
 	ShowDebug bool
-	Errors    []error
-	mw        MsgWriter
-	logs      chan Msg
-	closed    chan struct{}
+
+	// All errors, which can be read after Logger.Close is called, NOT THREAT
+	// SAFE.
+	Errors []error
+
+	mw     MsgWriter
+	logs   chan Msg
+	closed chan struct{}
 }
 
 // Fatal logs a recovered error which could have killed the application.
