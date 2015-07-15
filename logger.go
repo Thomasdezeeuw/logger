@@ -9,7 +9,6 @@
 package logger
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -31,11 +30,6 @@ const (
 const (
 	defaultStackSize = 4096
 	defaultLogsSize  = 1024
-)
-
-const (
-	fileFlag       = os.O_CREATE | os.O_APPEND | os.O_WRONLY
-	filePermission = 0644
 )
 
 // MsgWriter takes a msg and writes it to the output.
@@ -154,36 +148,6 @@ func New(name string, mw MsgWriter) (*Logger, error) {
 
 	go logWriter(log)
 	return log, nil
-}
-
-type fileMsgWriter struct {
-	w *bufio.Writer
-	f *os.File
-}
-
-func (fw *fileMsgWriter) Write(msg Msg) error {
-	_, err := fw.w.Write(msg.Bytes())
-	return err
-}
-
-func (fw *fileMsgWriter) Close() error {
-	flushErr := fw.w.Flush()
-	err := fw.f.Close()
-	if err == nil {
-		err = flushErr
-	}
-	return err
-}
-
-// NewFile creates a new logger that writes to a file.
-func NewFile(name, path string) (*Logger, error) {
-	f, err := os.OpenFile(path, fileFlag, filePermission)
-	if err != nil {
-		return nil, err
-	}
-
-	mw := &fileMsgWriter{bufio.NewWriter(f), f}
-	return New(name, mw)
 }
 
 type ioWriterMsgWriter struct {
