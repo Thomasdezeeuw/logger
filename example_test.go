@@ -10,14 +10,14 @@ import (
 	"time"
 )
 
-func ExampleTags() {
+func ExampleTags_String() {
 	tags := Tags{"tag1", "tag2"}
 	fmt.Print(tags.String())
 	// Output:
 	// tag1, tag2
 }
 
-func ExampleMsg() {
+func ExampleMsg_String() {
 	t, _ := time.Parse("2006-01-02 15:04:05", "2015-05-24 17:39:50")
 	msg := Msg{Error, "My message", Tags{"tag1", "tag2"}, t}
 	fmt.Print(msg.String())
@@ -56,7 +56,7 @@ func ExampleLogger_Error() {
 
 	err = errors.New("Some error")
 	log.Error(Tags{"file.go", "main"}, err)
-	// Logs:
+	// Logs some like:
 	// 2015-03-01 17:20:52 [Error] file.go, main: Some error
 }
 
