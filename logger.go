@@ -106,8 +106,12 @@ func (l *Logger) Debug(tags Tags, format string, v ...interface{}) {
 // software it's possible to introduce dead code with updates and new features.
 // If a function is being suspected of being dead (not used) in production, add
 // a call to Thumbstone and check the production logs to see if you're right.
-func (l *Logger) Thumbstone(item string) {
-	l.logs <- Msg{Thumb, item, Tags{"thumbstone"}, time.Now()}
+//
+// The tags should include thing like the function name and file location, to
+// easily locate the function. The tag "thumbstone" get added to the tags.
+func (l *Logger) Thumbstone(tags Tags, item string) {
+	tags = append(Tags{"thumbstone"}, tags...)
+	l.logs <- Msg{Thumb, item, tags, time.Now()}
 }
 
 // Close blocks until all logs are written to the writer. After all logs are

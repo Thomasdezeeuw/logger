@@ -232,9 +232,9 @@ func sendMessages(log *Logger) (time.Time, error) {
 	log.Info(tags, "Info message1")
 	log.Info(tags, "Info message2")
 	log.Info(tags, "Info message3")
-	log.Thumbstone("Thumb message1")
-	log.Thumbstone("Thumb message2")
-	log.Thumbstone("Thumb message3")
+	log.Thumbstone(tags, "Thumb message1")
+	log.Thumbstone(tags, "Thumb message2")
+	log.Thumbstone(tags, "Thumb message3")
 	log.ShowDebug = true
 	log.Debug(tags, "Debug message1")
 	log.Debug(tags, "Debug message2")
@@ -257,7 +257,6 @@ func checkMessages(t1 time.Time, mw *msgWriter, debugEnabled bool) error {
 		return fmt.Errorf("Expected %d messages, but got %d", nMsgs, len(mw.msgs))
 	}
 
-	tags := Tags{"test"}
 	for i, msg := range mw.msgs {
 		var expectedLevel = Debug
 		if i < 3 {
@@ -276,10 +275,11 @@ func checkMessages(t1 time.Time, mw *msgWriter, debugEnabled bool) error {
 
 		if expectedLevel == Fatal {
 			msg.Msg = msg.Msg[:14] // trim stack trace from message.
-		} else if expectedLevel == Thumb {
-			tags = Tags{"thumbstone"}
-		} else {
-			tags = Tags{"test"}
+		}
+
+		tags := Tags{"test"}
+		if expectedLevel == Thumb {
+			tags = Tags{"thumbstone", "test"}
 		}
 
 		if msg.Level != expectedLevel {
@@ -304,40 +304,46 @@ func checkMessages(t1 time.Time, mw *msgWriter, debugEnabled bool) error {
 func checkMessagesString(t1 time.Time, gotBytes []byte) error {
 	t1Str := t1.Format("2006-01-02 15:04:05")
 
-	// Remove the stack traces from the output and only keep the message lines.
-	var got string
+	// not the prettiest solution, but good enough...
+	expectedLines := []string{
+		t1Str + " [Fatal] test: Fatal message1",
+		t1Str + " [Fatal] test: Fatal message2",
+		t1Str + " [Fatal] test: Fatal message3",
+		t1Str + " [Error] test: Error message1",
+		t1Str + " [Error] test: Error message2",
+		t1Str + " [Error] test: Error message3",
+		t1Str + " [Info] test: Info message1",
+		t1Str + " [Info] test: Info message2",
+		t1Str + " [Info] test: Info message3",
+		t1Str + " [Thumb] thumbstone, test: Thumb message1",
+		t1Str + " [Thumb] thumbstone, test: Thumb message2",
+		t1Str + " [Thumb] thumbstone, test: Thumb message3",
+		t1Str + " [Debug] test: Debug message1",
+		t1Str + " [Debug] test: Debug message2",
+		t1Str + " [Debug] test: Debug message3",
+	}
+
+	i := 0
 	s := bufio.NewScanner(bytes.NewReader(gotBytes))
 	for s.Scan() {
-		line := s.Text()
-		if strings.HasPrefix(line, t1Str[:4]) {
-			got += line + "\n"
+		got := s.Text()
+		expected := expectedLines[i]
+
+		if !strings.HasPrefix(got, t1Str) {
+			continue
 		}
+
+		if got != expected {
+			return fmt.Errorf("Error comparing line %d\nExpected: %q\nbut got:  %q",
+				i, expected, got)
+		}
+		i++
 	}
 
-	if err := s.Err(); err != nil {
+	if i != len(expectedLines) {
+		return errors.New("Didn't get the same amount of lines as expected")
+	} else if err := s.Err(); err != nil {
 		return fmt.Errorf("Unexpected scanning error: %s", err.Error())
-	}
-
-	// not the prettiest solution, but good enough...
-	expected := t1Str + " [Fatal] test: Fatal message1\n"
-	expected += t1Str + " [Fatal] test: Fatal message2\n"
-	expected += t1Str + " [Fatal] test: Fatal message3\n"
-	expected += t1Str + " [Error] test: Error message1\n"
-	expected += t1Str + " [Error] test: Error message2\n"
-	expected += t1Str + " [Error] test: Error message3\n"
-	expected += t1Str + " [Info] test: Info message1\n"
-	expected += t1Str + " [Info] test: Info message2\n"
-	expected += t1Str + " [Info] test: Info message3\n"
-	expected += t1Str + " [Thumb] thumbstone: Thumb message1\n"
-	expected += t1Str + " [Thumb] thumbstone: Thumb message2\n"
-	expected += t1Str + " [Thumb] thumbstone: Thumb message3\n"
-	expected += t1Str + " [Debug] test: Debug message1\n"
-	expected += t1Str + " [Debug] test: Debug message2\n"
-	expected += t1Str + " [Debug] test: Debug message3\n"
-
-	if got != expected {
-		return fmt.Errorf("Expected the log file to contain: \n%s\nbut got: \n%s",
-			expected, got)
 	}
 	return nil
 }
