@@ -221,7 +221,6 @@ func TestCombineExistingName(t *testing.T) {
 // sendMessages is linked with checkMessages and checkMessagesString, any
 // changes most be checked in those functions aswell.
 func sendMessages(log *Logger) (time.Time, error) {
-	log.ShowDebug = true
 	tags := Tags{"test"}
 	t1 := time.Now().Truncate(time.Second)
 	log.Fatal(tags, errors.New("Fatal message1"))
@@ -236,10 +235,10 @@ func sendMessages(log *Logger) (time.Time, error) {
 	log.Thumbstone("Thumb message1")
 	log.Thumbstone("Thumb message2")
 	log.Thumbstone("Thumb message3")
+	log.ShowDebug = true
 	log.Debug(tags, "Debug message1")
 	log.Debug(tags, "Debug message2")
 	log.Debug(tags, "Debug message3")
-
 	log.ShowDebug = false
 	log.Debug(tags, "Debug message4")
 
