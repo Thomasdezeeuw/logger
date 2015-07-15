@@ -9,7 +9,6 @@
 package logger
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"runtime"
@@ -65,10 +64,10 @@ type Logger struct {
 
 // Fatal logs a recovered error which could have killed the program.
 func (l *Logger) Fatal(tags Tags, recv interface{}) {
-	// Capture the stack trace and drop null bytes (they'll show up as spaces).
+	// Capture the stack trace.
 	buf := make([]byte, defaultStackSize)
-	runtime.Stack(buf, false)
-	buf = bytes.Trim(buf, "\x00")
+	n := runtime.Stack(buf, false)
+	buf = buf[:n]
 
 	// Try to make some sense of the recoverd value.
 	var item string
