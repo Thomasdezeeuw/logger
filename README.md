@@ -3,7 +3,9 @@
 [![GoDoc](https://godoc.org/github.com/Thomasdezeeuw/logger?status.svg)](https://godoc.org/github.com/Thomasdezeeuw/logger)
 [![Build Status](https://travis-ci.org/Thomasdezeeuw/logger.png?branch=master)](https://travis-ci.org/Thomasdezeeuw/logger)
 
-Logger is a [Go](https://golang.org/) package for logging, build for speed.
+Logger is a asynchronous logging package for [Go](https://golang.org/). It is
+build for customisation and speed. It uses a custom log writer so any custom
+backend can be used to store the logs.
 
 ## Installation
 
@@ -32,7 +34,7 @@ func init() {
 		panic(err)
 	}
 
-	log.Info(logger.Tags{"init", "logger"}, "created a logger here")
+	log.Info(logger.Tags{"init", "logger"}, "created a logger in init function")
 }
 
 func main() {
@@ -42,14 +44,14 @@ func main() {
 		panic(err)
 	}
 
-	// IMPORTANT! Otherwise the file will never be written!
+	// IMPORTANT! Otherwise not all logs will be written!
 	defer log.Close()
 
 	user := "Thomas"
 	userId := "1"
-	tags := logger.Tags{"README.md", "main", "user:1" + userId}
+	tags := logger.Tags{"README.md", "main", "user:" + userId}
 	log.Info(tags, "Hi %s!", user)
-	log.Info(logger.Tags{"main"}, "This get logged to the same logger!")
+	log.Warn(logger.Tags{"main"}, "We need make this application functional")
 }
 ```
 
