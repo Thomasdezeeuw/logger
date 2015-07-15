@@ -25,6 +25,28 @@ func ExampleMsg_String() {
 	// 2015-05-24 17:39:50 [Error] tag1, tag2: My message
 }
 
+func ExampleNewLogLevel() {
+	myLogLevel := NewLogLevel("myLogLevel")
+	myLogLevel2 := NewLogLevel("myLogLevel2")
+	fmt.Println(myLogLevel.String())
+	fmt.Println(myLogLevel2.String())
+	// Output:
+	// myLogLevel
+	// myLogLevel2
+}
+
+func ExampleLogLevel_String() {
+	fmt.Println(Debug.String())
+	fmt.Println(Error.String())
+	fmt.Println(Info.String())
+	fmt.Println(Fatal.String())
+	// Output:
+	// Debug
+	// Error
+	// Info
+	// Fatal
+}
+
 func ExampleLogger_Fatal() {
 	log, err := NewConsole("App")
 	if err != nil {
