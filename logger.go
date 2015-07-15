@@ -15,15 +15,6 @@ import (
 	"time"
 )
 
-// The log operation levels.
-const (
-	FatalLevel = "FATAL"
-	ErrorLevel = "ERROR"
-	InfoLevel  = "INFO "
-	DebugLevel = "DEBUG"
-	ThumbLevel = "THUMB"
-)
-
 const (
 	defaultStackSize = 8192
 	defaultLogsSize  = 1024
@@ -81,17 +72,17 @@ func (l *Logger) Fatal(tags Tags, recv interface{}) {
 	}
 
 	item += "\n" + string(buf)
-	l.logs <- Msg{FatalLevel, item, tags, time.Now()}
+	l.logs <- Msg{Fatal, item, tags, time.Now()}
 }
 
 // Error logs a recoverable error.
 func (l *Logger) Error(tags Tags, err error) {
-	l.logs <- Msg{ErrorLevel, err.Error(), tags, time.Now()}
+	l.logs <- Msg{Error, err.Error(), tags, time.Now()}
 }
 
 // Info logs an informational message.
 func (l *Logger) Info(tags Tags, format string, v ...interface{}) {
-	l.logs <- Msg{InfoLevel, fmt.Sprintf(format, v...), tags, time.Now()}
+	l.logs <- Msg{Info, fmt.Sprintf(format, v...), tags, time.Now()}
 }
 
 // Debug logs the lowest level of information, only usefull when debugging
@@ -99,7 +90,7 @@ func (l *Logger) Info(tags Tags, format string, v ...interface{}) {
 // defaults to false.
 func (l *Logger) Debug(tags Tags, format string, v ...interface{}) {
 	if l.ShowDebug {
-		l.logs <- Msg{DebugLevel, fmt.Sprintf(format, v...), tags, time.Now()}
+		l.logs <- Msg{Debug, fmt.Sprintf(format, v...), tags, time.Now()}
 	}
 }
 
@@ -108,7 +99,7 @@ func (l *Logger) Debug(tags Tags, format string, v ...interface{}) {
 // If a function is being suspected of being dead (not used) in production, add
 // a call to Thumbstone and check the production logs to see if you're right.
 func (l *Logger) Thumbstone(item string) {
-	l.logs <- Msg{ThumbLevel, item, Tags{"thumbstone"}, time.Now()}
+	l.logs <- Msg{Thumb, item, Tags{"thumbstone"}, time.Now()}
 }
 
 // Close blocks until all logs are written to the writer. After all logs are

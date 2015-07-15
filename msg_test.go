@@ -59,14 +59,14 @@ func TestMsg(t *testing.T) {
 		msg      Msg
 		expected string
 	}{
-		{Msg{"FATAL", "Message", Tags{}, now},
-			tStr + " [FATAL] : Message\n"},
-		{Msg{"ERROR", "Message", Tags{"tag1"}, now},
-			tStr + " [ERROR] tag1: Message\n"},
-		{Msg{"INFO ", "Message", Tags{"tag1", "tag2"}, now},
-			tStr + " [INFO ] tag1, tag2: Message\n"},
-		{Msg{"DEBUG", "Message", Tags{"tag1", "tag2", "tag3"}, now},
-			tStr + " [DEBUG] tag1, tag2, tag3: Message\n"},
+		{Msg{Fatal, "Message", Tags{}, now},
+			tStr + " [Fatal] : Message\n"},
+		{Msg{Error, "Message", Tags{"tag1"}, now},
+			tStr + " [Error] tag1: Message\n"},
+		{Msg{Info, "Message", Tags{"tag1", "tag2"}, now},
+			tStr + " [Info] tag1, tag2: Message\n"},
+		{Msg{Debug, "Message", Tags{"tag1", "tag2", "tag3"}, now},
+			tStr + " [Debug] tag1, tag2, tag3: Message\n"},
 	}
 
 	for _, test := range msgTests {
@@ -77,6 +77,30 @@ func TestMsg(t *testing.T) {
 				" and %q, want %q", got, string(gotBytes), test.expected)
 		} else if got != test.expected {
 			t.Errorf("Expected Msg.String() to return %q, got %q",
+				test.expected, got)
+		}
+	}
+}
+
+func TestLogLevelString(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		lvl      LogLevel
+		expected string
+	}{
+		{Debug, "Debug"},
+		{Thumb, "Thumb"},
+		{Info, "Info"},
+		{Warn, "Warn"},
+		{Error, "Error"},
+		{Fatal, "Fatal"},
+	}
+
+	for _, test := range tests {
+		got := test.lvl.String()
+		if got != test.expected {
+			t.Fatalf("Expected Loglevel %d to return %s, but got %s", int(test.lvl),
 				test.expected, got)
 		}
 	}

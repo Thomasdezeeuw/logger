@@ -18,7 +18,7 @@ func ExampleTags() {
 }
 
 func ExampleMsg() {
-	msg := Msg{"ERROR", "My message", Tags{"tag1", "tag2"}, time.Now()}
+	msg := Msg{Error, "My message", Tags{"tag1", "tag2"}, time.Now()}
 	fmt.Print(msg.String())
 	// Prints:
 	// 2015-05-24 17:39:50 [ERROR] tag1, tag2: My message

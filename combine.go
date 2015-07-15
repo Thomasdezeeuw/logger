@@ -26,8 +26,7 @@ func combinedLogWriter(log *Logger, logs []*Logger) {
 	// Pass on every message to the underlying loggers.
 	for msg := range log.logs {
 		for _, log := range logs {
-			if msg.Level != DebugLevel ||
-				(msg.Level == DebugLevel && log.ShowDebug) {
+			if msg.Level >= Debug || log.ShowDebug {
 				log.logs <- msg
 			}
 		}

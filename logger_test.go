@@ -260,26 +260,24 @@ func checkMessages(t1 time.Time, mw *msgWriter, debugEnabled bool) error {
 
 	tags := Tags{"test"}
 	for i, msg := range mw.msgs {
-		var expectedLevel string
+		var expectedLevel = Debug
 		if i < 3 {
-			expectedLevel = FatalLevel
+			expectedLevel = Fatal
 		} else if i >= 3 && i < 6 {
-			expectedLevel = ErrorLevel
+			expectedLevel = Error
 		} else if i >= 6 && i < 9 {
-			expectedLevel = InfoLevel
+			expectedLevel = Info
 		} else if i >= 9 && i < 12 {
-			expectedLevel = ThumbLevel
-		} else {
-			expectedLevel = DebugLevel
+			expectedLevel = Thumb
 		}
 
-		expectedMsg := expectedLevel[:1] + strings.ToLower(expectedLevel[1:])
+		expectedMsg := expectedLevel.String()
 		expectedMsg = strings.TrimSpace(expectedMsg) + " message"
 		expectedMsg += fmt.Sprintf("%d", i%3+1)
 
-		if expectedLevel == FatalLevel {
+		if expectedLevel == Fatal {
 			msg.Msg = msg.Msg[:14] // trim stack trace from message.
-		} else if expectedLevel == ThumbLevel {
+		} else if expectedLevel == Thumb {
 			tags = Tags{"thumbstone"}
 		} else {
 			tags = Tags{"test"}
@@ -322,21 +320,21 @@ func checkMessagesString(t1 time.Time, gotBytes []byte) error {
 	}
 
 	// not the prettiest solution, but good enough...
-	expected := t1Str + " [FATAL] test: Fatal message1\n"
-	expected += t1Str + " [FATAL] test: Fatal message2\n"
-	expected += t1Str + " [FATAL] test: Fatal message3\n"
-	expected += t1Str + " [ERROR] test: Error message1\n"
-	expected += t1Str + " [ERROR] test: Error message2\n"
-	expected += t1Str + " [ERROR] test: Error message3\n"
-	expected += t1Str + " [INFO ] test: Info message1\n"
-	expected += t1Str + " [INFO ] test: Info message2\n"
-	expected += t1Str + " [INFO ] test: Info message3\n"
-	expected += t1Str + " [THUMB] thumbstone: Thumb message1\n"
-	expected += t1Str + " [THUMB] thumbstone: Thumb message2\n"
-	expected += t1Str + " [THUMB] thumbstone: Thumb message3\n"
-	expected += t1Str + " [DEBUG] test: Debug message1\n"
-	expected += t1Str + " [DEBUG] test: Debug message2\n"
-	expected += t1Str + " [DEBUG] test: Debug message3\n"
+	expected := t1Str + " [Fatal] test: Fatal message1\n"
+	expected += t1Str + " [Fatal] test: Fatal message2\n"
+	expected += t1Str + " [Fatal] test: Fatal message3\n"
+	expected += t1Str + " [Error] test: Error message1\n"
+	expected += t1Str + " [Error] test: Error message2\n"
+	expected += t1Str + " [Error] test: Error message3\n"
+	expected += t1Str + " [Info] test: Info message1\n"
+	expected += t1Str + " [Info] test: Info message2\n"
+	expected += t1Str + " [Info] test: Info message3\n"
+	expected += t1Str + " [Thumb] thumbstone: Thumb message1\n"
+	expected += t1Str + " [Thumb] thumbstone: Thumb message2\n"
+	expected += t1Str + " [Thumb] thumbstone: Thumb message3\n"
+	expected += t1Str + " [Debug] test: Debug message1\n"
+	expected += t1Str + " [Debug] test: Debug message2\n"
+	expected += t1Str + " [Debug] test: Debug message3\n"
 
 	if got != expected {
 		return fmt.Errorf("Expected the log file to contain: \n%s\nbut got: \n%s",

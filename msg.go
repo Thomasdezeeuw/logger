@@ -5,15 +5,18 @@
 package logger
 
 import (
+	"fmt"
+	"math"
 	"strings"
 	"time"
 )
 
 // Msg is a message created by a log operation.
 type Msg struct {
-	Level, Msg string
-	Tags       Tags
-	Timestamp  time.Time
+	Level     LogLevel
+	Msg       string
+	Tags      Tags
+	Timestamp time.Time
 }
 
 // String creates a string message in the following format:
@@ -43,10 +46,10 @@ func (msg *Msg) Bytes() []byte {
 	itoa(&buf, sec, 2)
 	buf = append(buf, ' ')
 
-	// Write the level.
-	// Format: "[LEVEL] " (level is always 5 characters long).
+	// Write the log level.
+	// Format: "[LEVEL] ".
 	buf = append(buf, '[')
-	buf = append(buf, msg.Level...)
+	buf = append(buf, msg.Level.Bytes()...)
 	buf = append(buf, ']')
 	buf = append(buf, ' ')
 
@@ -77,4 +80,35 @@ func itoa(buf *[]byte, i int, wid int) {
 	}
 	b[bp] = byte('0' + i)
 	*buf = append(*buf, b[bp:]...)
+}
+
+type LogLevel uint8
+
+// Log levels available by default.
+const (
+	Debug LogLevel = iota
+	Thumb
+	Info
+	Warn
+	Error
+	Fatal
+)
+
+var (
+	logLevelNames   = "DebugThumbInfoWarnErrorFatal"
+	logLevelIndices = []int{0, 5, 10, 14, 18, 23, 28}
+)
+
+func (lvl LogLevel) String() string {
+	if int(lvl) >= len(logLevelIndices)-1 {
+		return fmt.Sprintf("LogLevel(%d)", lvl)
+	}
+
+	startIndex := logLevelIndices[lvl]
+	endIndex := logLevelIndices[lvl+1]
+	return logLevelNames[startIndex:endIndex]
+}
+
+func (lvl LogLevel) Bytes() []byte {
+	return []byte(lvl.String())
 }
