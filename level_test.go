@@ -21,9 +21,13 @@ func TestLogLevelString(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		got := test.lvl.String()
-		if got != test.expected {
-			t.Fatalf("Expected Loglevel %d to return %s, but got %s", int(test.lvl),
+		got, gotBytes := test.lvl.String(), test.lvl.Bytes()
+
+		if got != string(gotBytes) {
+			t.Errorf("LogLevel.Bytes() and String() don't return the same value, got %q"+
+				" and %q, want %q", got, string(gotBytes), test.expected)
+		} else if got != test.expected {
+			t.Errorf("Expected LogLevel.String() to return %q, got %q",
 				test.expected, got)
 		}
 	}
