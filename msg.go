@@ -61,7 +61,6 @@ func (msg *Msg) Bytes() []byte {
 
 	// The actual message.
 	buf = append(buf, strings.TrimSpace(msg.Msg)...)
-	buf = append(buf, '\n')
 
 	return buf
 }

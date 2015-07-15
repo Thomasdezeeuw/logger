@@ -10,7 +10,9 @@ type ioWriterMsgWriter struct {
 }
 
 func (iw *ioWriterMsgWriter) Write(msg Msg) error {
-	_, err := iw.w.Write(msg.Bytes())
+	// todo: check if length of the write mathces the length of the message bytes.
+	bytes := append(msg.Bytes(), '\n')
+	_, err := iw.w.Write(bytes)
 	return err
 }
 

@@ -17,7 +17,8 @@ type fileMsgWriter struct {
 
 func (fw *fileMsgWriter) Write(msg Msg) error {
 	// todo: check if length of the write mathces the length of the message bytes.
-	_, err := fw.w.Write(msg.Bytes())
+	bytes := append(msg.Bytes(), '\n')
+	_, err := fw.w.Write(bytes)
 	return err
 }
 
