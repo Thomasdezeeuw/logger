@@ -1,6 +1,9 @@
 package logger
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestLogLevelString(t *testing.T) {
 	t.Parallel()
@@ -24,4 +27,22 @@ func TestLogLevelString(t *testing.T) {
 				test.expected, got)
 		}
 	}
+}
+
+func TestNewLogLevel(t *testing.T) {
+	oldLogLevelNames := logLevelNames
+	oldLogLevelIndices := logLevelIndices
+
+	for i := 1; i <= 248; i++ {
+		expected := fmt.Sprintf("myLogLevel%d", i)
+		myLogLevel := NewLogLevel(expected)
+
+		if got := myLogLevel.String(); got != expected {
+			t.Fatalf("Expected Loglevel %d to return %s, but got %s", int(myLogLevel),
+				expected, got)
+		}
+	}
+
+	logLevelNames = oldLogLevelNames
+	logLevelIndices = oldLogLevelIndices
 }
