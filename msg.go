@@ -7,11 +7,12 @@ package logger
 import (
 	"fmt"
 	"math"
-	"strings"
 	"time"
 )
 
-// Msg is a message created by a log operation.
+// Msg is a message created by a log operation. The timezone of timestamp is
+// alway is current timezone, advanced is to log time in the UTC timezone, by
+// calling Msg.Timestamp.UTC().
 type Msg struct {
 	Level     LogLevel
 	Msg       string
@@ -21,64 +22,19 @@ type Msg struct {
 
 // String creates a string message in the following format:
 //	YYYY-MM-DD HH:MM:SS [LEVEL] tag1, tag2: message
+//
+// Note: time is to the UTC timezone.
 func (msg *Msg) String() string {
-	return string(msg.Bytes())
+	m := msg.Timestamp.UTC().Format("2006-01-02 15:04:05")
+	m += " [" + msg.Level.String() + "] "
+	m += msg.Tags.String() + ": "
+	m += msg.Msg
+	return m
 }
 
 // Bytes does the same as Tags.String, but returns a byte slice.
 func (msg *Msg) Bytes() []byte {
-	var buf []byte
-
-	// Write the date and time.
-	// Format: "YYYY-MM-DD HH:MM:SS ".
-	year, month, day := msg.Timestamp.Date()
-	hour, min, sec := msg.Timestamp.Clock()
-	itoa(&buf, year, 4)
-	buf = append(buf, '-')
-	itoa(&buf, int(month), 2)
-	buf = append(buf, '-')
-	itoa(&buf, day, 2)
-	buf = append(buf, ' ')
-	itoa(&buf, hour, 2)
-	buf = append(buf, ':')
-	itoa(&buf, min, 2)
-	buf = append(buf, ':')
-	itoa(&buf, sec, 2)
-	buf = append(buf, ' ')
-
-	// Write the log level.
-	// Format: "[LEVEL] ".
-	buf = append(buf, '[')
-	buf = append(buf, msg.Level.Bytes()...)
-	buf = append(buf, ']')
-	buf = append(buf, ' ')
-
-	// Write the tags.
-	// Format: "tag1, tag2: ".
-	buf = append(buf, msg.Tags.Bytes()...)
-	buf = append(buf, ':')
-	buf = append(buf, ' ')
-
-	// The actual message.
-	buf = append(buf, strings.TrimSpace(msg.Msg)...)
-
-	return buf
-}
-
-// Cheap integer to fixed-width decimal ASCII. Modified version from the Golang
-// logger package.
-func itoa(buf *[]byte, i int, wid int) {
-	var b [4]byte // only used for year, month and day so 4 is enough.
-	bp := len(b) - 1
-	for i >= 10 || wid > 1 {
-		wid--
-		q := i / 10
-		b[bp] = byte('0' + i - q*10)
-		bp--
-		i = q
-	}
-	b[bp] = byte('0' + i)
-	*buf = append(*buf, b[bp:]...)
+	return []byte(msg.String())
 }
 
 // LogLevel indicent which level of detail a log operation has.

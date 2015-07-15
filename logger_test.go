@@ -222,7 +222,7 @@ func TestCombineExistingName(t *testing.T) {
 // changes most be checked in those functions aswell.
 func sendMessages(log *Logger) (time.Time, error) {
 	tags := Tags{"test"}
-	t1 := time.Now().Truncate(time.Second)
+	t1 := time.Now().UTC().Truncate(time.Second)
 	log.Fatal(tags, errors.New("Fatal message1"))
 	log.Fatal(tags, errors.New("Fatal message2"))
 	log.Fatal(tags, "Fatal message3")
