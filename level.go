@@ -23,13 +23,8 @@ var (
 	logLevelIndices = []int{0, 5, 10, 14, 18, 23, 28}
 )
 
-// String return the name of the log level. Examples:
-//
-//	Debug.String() // "Debug"
-//	Info.String()  // "Info"
-//	Fatal.String() // "Fatal"
-//
-// Custom levels are also supported, if created with NewLogLevel.
+// String return the name of the log level. Custom levels are also supported,
+// if created with NewLogLevel.
 func (lvl LogLevel) String() string {
 	if int(lvl) >= len(logLevelIndices)-1 {
 		return fmt.Sprintf("LogLevel(%d)", lvl)
@@ -46,8 +41,8 @@ func (lvl LogLevel) Bytes() []byte {
 }
 
 // NewLogLevel creates a new fully supported custom log level for used in
-//  logging, this function makes sure that LogLevel.String and LogLevel.Bytes
-// return the correct given name.
+// logging. This function makes sure that LogLevel.String and LogLevel.Bytes
+// return the correct name.
 //
 // Note: THIS FUNCTION IS NOT THREAD SAFE, use it before starting to log.
 //

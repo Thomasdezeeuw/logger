@@ -7,8 +7,8 @@ package logger
 import "time"
 
 // Msg is a message created by a log operation. The timezone of timestamp is
-// alway is current timezone, advanced is to log time in the UTC timezone, by
-// calling Msg.Timestamp.UTC().
+// alway is current timezone, recommend is to log time in the UTC timezone, by
+// calling Msg.Timestamp.UTC(), Msg.String does this by default.
 type Msg struct {
 	Level     LogLevel
 	Msg       string
