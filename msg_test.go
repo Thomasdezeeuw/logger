@@ -70,11 +70,11 @@ func TestMsg(t *testing.T) {
 	}
 
 	for _, test := range msgTests {
-		got, gotB := test.msg.String(), test.msg.Bytes()
+		got, gotBytes := test.msg.String(), test.msg.Bytes()
 
-		if got != string(gotB) {
+		if got != string(gotBytes) {
 			t.Errorf("Msg.Bytes() and String() don't return the same value, got %q"+
-				" and %q, want %q", got, string(gotB), test.expected)
+				" and %q, want %q", got, string(gotBytes), test.expected)
 		} else if got != test.expected {
 			t.Errorf("Expected Msg.String() to return %q, got %q",
 				test.expected, got)

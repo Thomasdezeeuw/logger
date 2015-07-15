@@ -20,11 +20,11 @@ func TestTags(t *testing.T) {
 	}
 
 	for _, test := range tagTests {
-		got, gotB := test.tags.String(), test.tags.Bytes()
+		got, gotBytes := test.tags.String(), test.tags.Bytes()
 
-		if got != string(gotB) {
+		if got != string(gotBytes) {
 			t.Errorf("Tags.Bytes() and String() don't return the same value, got %q"+
-				" and %q, want %q", got, string(gotB), test.expected)
+				" and %q, want %q", got, string(gotBytes), test.expected)
 		} else if got != test.expected {
 			t.Errorf("Expected Tags.String() to return %q, got %q",
 				test.expected, got)
