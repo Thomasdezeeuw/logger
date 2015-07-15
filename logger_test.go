@@ -229,6 +229,9 @@ func sendMessages(log *Logger) (time.Time, error) {
 	log.Error(tags, errors.New("Error message1"))
 	log.Error(tags, errors.New("Error message2"))
 	log.Error(tags, errors.New("Error message3"))
+	log.Warn(tags, "Warn message1")
+	log.Warn(tags, "Warn message2")
+	log.Warn(tags, "Warn message3")
 	log.Info(tags, "Info message1")
 	log.Info(tags, "Info message2")
 	log.Info(tags, "Info message3")
@@ -251,7 +254,7 @@ func sendMessages(log *Logger) (time.Time, error) {
 
 // checkMessages is linked to sendMessages.
 func checkMessages(t1 time.Time, mw *msgWriter, debugEnabled bool) error {
-	if nMsgs := 15; !debugEnabled {
+	if nMsgs := 18; !debugEnabled {
 		nMsgs = 12
 	} else if len(mw.msgs) != nMsgs {
 		return fmt.Errorf("Expected %d messages, but got %d", nMsgs, len(mw.msgs))
@@ -264,8 +267,10 @@ func checkMessages(t1 time.Time, mw *msgWriter, debugEnabled bool) error {
 		} else if i >= 3 && i < 6 {
 			expectedLevel = Error
 		} else if i >= 6 && i < 9 {
-			expectedLevel = Info
+			expectedLevel = Warn
 		} else if i >= 9 && i < 12 {
+			expectedLevel = Info
+		} else if i >= 12 && i < 15 {
 			expectedLevel = Thumb
 		}
 
@@ -312,6 +317,9 @@ func checkMessagesString(t1 time.Time, gotBytes []byte) error {
 		t1Str + " [Error] test: Error message1",
 		t1Str + " [Error] test: Error message2",
 		t1Str + " [Error] test: Error message3",
+		t1Str + " [Warn] test: Warn message1",
+		t1Str + " [Warn] test: Warn message2",
+		t1Str + " [Warn] test: Warn message3",
 		t1Str + " [Info] test: Info message1",
 		t1Str + " [Info] test: Info message2",
 		t1Str + " [Info] test: Info message3",
