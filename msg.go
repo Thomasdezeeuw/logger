@@ -82,6 +82,7 @@ func itoa(buf *[]byte, i int, wid int) {
 	*buf = append(*buf, b[bp:]...)
 }
 
+// LogLevel indicent which level of detail a log operation has.
 type LogLevel uint8
 
 // Log levels available by default.
@@ -99,6 +100,13 @@ var (
 	logLevelIndices = []int{0, 5, 10, 14, 18, 23, 28}
 )
 
+// String return the name of the log level. Examples:
+//
+//	Debug.String() // "Debug"
+//	Info.String() // "Info"
+//	Fatal.String() // "Fatal"
+//
+// Custom levels are also supported, if created with NewLogLevel.
 func (lvl LogLevel) String() string {
 	if int(lvl) >= len(logLevelIndices)-1 {
 		return fmt.Sprintf("LogLevel(%d)", lvl)
@@ -109,6 +117,7 @@ func (lvl LogLevel) String() string {
 	return logLevelNames[startIndex:endIndex]
 }
 
+// Bytes does the same as LogLevel.String, but returns a byte slice.
 func (lvl LogLevel) Bytes() []byte {
 	return []byte(lvl.String())
 }
