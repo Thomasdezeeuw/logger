@@ -108,7 +108,7 @@ func TestLogLevelString(t *testing.T) {
 }
 
 func TestNewLogLevel(t *testing.T) {
-	for i := 1; i < 10; i++ {
+	for i := 1; i <= 248; i++ {
 		expected := fmt.Sprintf("myLogLevel%d", i)
 		myLogLevel := NewLogLevel(expected)
 
