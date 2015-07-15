@@ -112,3 +112,21 @@ func (lvl LogLevel) String() string {
 func (lvl LogLevel) Bytes() []byte {
 	return []byte(lvl.String())
 }
+
+// NewLogLevel creates a new fully supported custom log level for used in
+//  logging, this function makes sure that LogLevel.String and LogLevel.Bytes
+// return the correct given name.
+//
+// Note: THIS FUNCTION IS NOT THREAD SAFE, use it before starting to log.
+//
+// Note: The maximum number of custom log levels is 248, if more are created
+// this function will panic.
+func NewLogLevel(name string) LogLevel {
+	if len(logLevelIndices) >= math.MaxUint8 {
+		panic("ini: can't have more then 255 log levels")
+	}
+
+	logLevelNames += name
+	logLevelIndices = append(logLevelIndices, len(logLevelNames))
+	return LogLevel(len(logLevelIndices) - 2)
+}

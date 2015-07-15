@@ -5,6 +5,7 @@
 package logger
 
 import (
+	"fmt"
 	"testing"
 	"time"
 )
@@ -102,6 +103,18 @@ func TestLogLevelString(t *testing.T) {
 		if got != test.expected {
 			t.Fatalf("Expected Loglevel %d to return %s, but got %s", int(test.lvl),
 				test.expected, got)
+		}
+	}
+}
+
+func TestNewLogLevel(t *testing.T) {
+	for i := 1; i < 10; i++ {
+		expected := fmt.Sprintf("myLogLevel%d", i)
+		myLogLevel := NewLogLevel(expected)
+
+		if got := myLogLevel.String(); got != expected {
+			t.Fatalf("Expected Loglevel %d to return %s, but got %s", int(myLogLevel),
+				expected, got)
 		}
 	}
 }
