@@ -80,6 +80,11 @@ func (l *Logger) Error(tags Tags, err error) {
 	l.logs <- Msg{Error, err.Error(), tags, time.Now()}
 }
 
+// Warn logs a warning.
+func (l *Logger) Warn(tags Tags, format string, v ...interface{}) {
+	l.logs <- Msg{Warn, fmt.Sprintf(format, v...), tags, time.Now()}
+}
+
 // Info logs an informational message.
 func (l *Logger) Info(tags Tags, format string, v ...interface{}) {
 	l.logs <- Msg{Info, fmt.Sprintf(format, v...), tags, time.Now()}
