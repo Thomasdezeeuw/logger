@@ -23,12 +23,12 @@ func Combine(name string, logs ...*Logger) (*Logger, error) {
 
 // Needs to be run in it's own goroutine, it blocks until log.logs is closed.
 func combinedLogWriter(log *Logger, logs []*Logger) {
-	j := len(logs)
+	// Pass on every message to the underlying loggers.
 	for msg := range log.logs {
-		for i := 0; i < j; i++ {
+		for _, log := range logs {
 			if msg.Level != DebugLevel ||
-				(msg.Level == DebugLevel && logs[i].ShowDebug) {
-				logs[i].logs <- msg
+				(msg.Level == DebugLevel && log.ShowDebug) {
+				log.logs <- msg
 			}
 		}
 	}
@@ -43,15 +43,14 @@ func combinedLogWriter(log *Logger, logs []*Logger) {
 
 	// Wait for all underlying loggers to respond.
 	for i := len(logs); i > 0; i-- {
-		err := <-errChan
-		if err != nil {
+		if err := <-errChan; err != nil {
 			log.Errors = append(log.Errors, err)
 		}
 	}
 
 	// Add all underlying errors to the top one.
-	for i := 0; i < j; i++ {
-		log.Errors = append(log.Errors, logs[i].Errors...)
+	for _, log2 := range logs {
+		log.Errors = append(log.Errors, log2.Errors...)
 	}
 
 	log.closed <- struct{}{}
