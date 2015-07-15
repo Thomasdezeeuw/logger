@@ -4,8 +4,6 @@
 
 package logger
 
-const defaultTagsSize = 50
-
 // Tags are keywords usefull in searching logs. Examples of these are:
 //	"file.go", "myFn" // indicating the location of the log operation.
 //	"user:$id" // indicating a user is logged in (usefull in user specific bugs)
@@ -18,7 +16,7 @@ func (tags *Tags) String() string {
 
 // Bytes creates a comma separated list from the tags in bytes.
 func (tags *Tags) Bytes() []byte {
-	buf := make([]byte, 0, defaultTagsSize)
+	var buf []byte
 
 	// Add each tag in the form of "tag, "
 	for _, tag := range *tags {

@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-const defaultMsgSize = 100
-
 // Msg is a message created by a log operation.
 type Msg struct {
 	Level, Msg string
@@ -27,7 +25,7 @@ func (msg *Msg) String() string {
 // Bytes formats a message in the following format:
 //	YYYY-MM-DD HH:MM:SS [LEVEL] tag1, tag2: message
 func (msg *Msg) Bytes() []byte {
-	buf := make([]byte, 0, defaultMsgSize)
+	var buf []byte
 
 	// Write the date and time.
 	// Format: "YYYY-MM-DD HH:MM:SS ".
