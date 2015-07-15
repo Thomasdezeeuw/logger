@@ -4,9 +4,13 @@
 
 package logger
 
-// Tags are keywords usefull in searching logs. Examples of these are:
-//	"file.go", "myFn" // indicating the location of the log operation.
-//	"user:$id" // indicating a user is logged in (usefull in user specific bugs)
+// Tags are keywords usefull in searching the logs, for example:
+//
+//	tags := []Tags{"file.go", "myFn", "user:$id", "input:$input"}
+//
+// With this information you can lookup any logs for a specific user reporting
+// problems. Then you can find which function, in which file, is throwing the
+// error.
 type Tags []string
 
 // String creates a comma separated list from the tags in string.
@@ -14,7 +18,7 @@ func (tags *Tags) String() string {
 	return string(tags.Bytes())
 }
 
-// Bytes creates a comma separated list from the tags in bytes.
+// Bytes does the same as Tags.String, but returns a byte slice.
 func (tags *Tags) Bytes() []byte {
 	var buf []byte
 

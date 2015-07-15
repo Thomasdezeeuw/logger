@@ -2,7 +2,7 @@
 //
 // Licensed onder the MIT license that can be found in the LICENSE file.
 
-// Package logger provides multiple ways to log information of different level
+// Package logger provides multiple ways to log information of different levels
 // of importance. No default logger is created, but Get is provided to get any
 // logger at any location. See the provided examples, both in the documentation
 // and the _examples directory (for complete examples).
@@ -51,8 +51,8 @@ var loggers = map[string]*Logger{}
 // used for testing if a function is called in production.
 //
 // Note: Log operations (Fatal, Error etc.) don't instally write to the
-// io.Writer, before closing the program call Logger.Close to ensure that all
-// log operations are written to the io.Writer or MsgWriter.
+// io.Writer, before closing the application call Logger.Close to ensure that
+// all log operations are written to the io.Writer or MsgWriter.
 type Logger struct {
 	Name      string
 	ShowDebug bool
@@ -62,7 +62,7 @@ type Logger struct {
 	closed    chan struct{}
 }
 
-// Fatal logs a recovered error which could have killed the program.
+// Fatal logs a recovered error which could have killed the application.
 func (l *Logger) Fatal(tags Tags, recv interface{}) {
 	// Capture the stack trace.
 	buf := make([]byte, defaultStackSize)

@@ -22,8 +22,7 @@ func (msg *Msg) String() string {
 	return string(msg.Bytes())
 }
 
-// Bytes formats a message in the following format:
-//	YYYY-MM-DD HH:MM:SS [LEVEL] tag1, tag2: message
+// Bytes does the same as Tags.String, but returns a byte slice.
 func (msg *Msg) Bytes() []byte {
 	var buf []byte
 

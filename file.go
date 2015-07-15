@@ -16,6 +16,7 @@ type fileMsgWriter struct {
 }
 
 func (fw *fileMsgWriter) Write(msg Msg) error {
+	// todo: check if length of the write mathces the length of the message bytes.
 	_, err := fw.w.Write(msg.Bytes())
 	return err
 }
@@ -29,7 +30,7 @@ func (fw *fileMsgWriter) Close() error {
 	return err
 }
 
-// NewFile creates a new logger that writes to a file.
+// NewFile creates a new logger that writes to the given file.
 func NewFile(name, path string) (*Logger, error) {
 	f, err := os.OpenFile(path, defaultFileFlag, defaultFilePermission)
 	if err != nil {
