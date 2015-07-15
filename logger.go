@@ -26,7 +26,7 @@ const (
 )
 
 const (
-	defaultStackSize = 4096
+	defaultStackSize = 8192
 	defaultLogsSize  = 1024
 )
 
