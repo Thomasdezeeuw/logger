@@ -2,6 +2,7 @@ package logger
 
 import (
 	"bufio"
+	"io"
 	"os"
 )
 
@@ -16,10 +17,14 @@ type fileMsgWriter struct {
 }
 
 func (fw *fileMsgWriter) Write(msg Msg) error {
-	// todo: check if length of the write mathces the length of the message bytes.
 	bytes := append(msg.Bytes(), '\n')
-	_, err := fw.w.Write(bytes)
-	return err
+	n, err := fw.w.Write(bytes)
+	if err != nil {
+		return err
+	} else if n != len(bytes) {
+		return io.ErrShortWrite
+	}
+	return nil
 }
 
 func (fw *fileMsgWriter) Close() error {
