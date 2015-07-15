@@ -224,8 +224,8 @@ func sendMessages(log *Logger) (time.Time, error) {
 	tags := Tags{"test"}
 	t1 := time.Now().UTC().Truncate(time.Second)
 	log.Fatal(tags, errors.New("Fatal message1"))
-	log.Fatal(tags, errors.New("Fatal message2"))
-	log.Fatal(tags, "Fatal message3")
+	log.Fatal(tags, "Fatal message2")
+	log.Fatal(tags, NewLogLevel("Fatal message3"))
 	log.Error(tags, errors.New("Error message1"))
 	log.Error(tags, errors.New("Error message2"))
 	log.Error(tags, errors.New("Error message3"))
