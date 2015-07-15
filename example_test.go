@@ -18,10 +18,11 @@ func ExampleTags() {
 }
 
 func ExampleMsg() {
-	msg := Msg{Error, "My message", Tags{"tag1", "tag2"}, time.Now()}
+	t, _ := time.Parse("2006-01-02 15:04:05", "2015-05-24 17:39:50")
+	msg := Msg{Error, "My message", Tags{"tag1", "tag2"}, t}
 	fmt.Print(msg.String())
-	// Prints:
-	// 2015-05-24 17:39:50 [ERROR] tag1, tag2: My message
+	// Output:
+	// 2015-05-24 17:39:50 [Error] tag1, tag2: My message
 }
 
 func ExampleLogger_Fatal() {
@@ -56,7 +57,7 @@ func ExampleLogger_Error() {
 	err = errors.New("Some error")
 	log.Error(Tags{"file.go", "main"}, err)
 	// Logs:
-	// 2015-03-01 17:20:52 [ERROR] file.go, main: Some error
+	// 2015-03-01 17:20:52 [Error] file.go, main: Some error
 }
 
 func ExampleLogger_Info() {
@@ -67,7 +68,7 @@ func ExampleLogger_Info() {
 
 	log.Info(Tags{"file.go", "main"}, "my %s message", "info")
 	// Logs:
-	// 2015-03-01 17:20:52 [INFO ] file.go, main: My info message
+	// 2015-03-01 17:20:52 [info] file.go, main: My info message
 }
 
 func ExampleLogger_Debug() {
@@ -78,7 +79,7 @@ func ExampleLogger_Debug() {
 
 	log.Debug(Tags{"file.go", "main"}, "my %s message", "debug")
 	// Logs:
-	// 2015-03-01 17:20:52 [DEBUG] file.go, main: My debug message
+	// 2015-03-01 17:20:52 [debug] file.go, main: My debug message
 }
 
 func ExampleGet() {
