@@ -44,6 +44,9 @@ func TestMsg(t *testing.T) {
 }
 
 func TestNewLogLevel(t *testing.T) {
+	oldLogLevelNames := logLevelNames
+	oldLogLevelIndices := logLevelIndices
+
 	for i := 1; i <= 248; i++ {
 		expected := fmt.Sprintf("myLogLevel%d", i)
 		myLogLevel := NewLogLevel(expected)
@@ -53,4 +56,7 @@ func TestNewLogLevel(t *testing.T) {
 				expected, got)
 		}
 	}
+
+	logLevelNames = oldLogLevelNames
+	logLevelIndices = oldLogLevelIndices
 }
