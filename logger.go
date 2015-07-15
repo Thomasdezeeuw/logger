@@ -59,23 +59,23 @@ type Logger struct {
 // Fatal logs a recovered error which could have killed the application.
 func (l *Logger) Fatal(tags Tags, recv interface{}) {
 	// Capture the stack trace.
-	buf := make([]byte, defaultStackSize)
-	n := runtime.Stack(buf, false)
-	buf = buf[:n]
+	stackTrace := make([]byte, defaultStackSize)
+	n := runtime.Stack(stackTrace, false)
+	stackTrace = stackTrace[:n]
 
 	// Try to make some sense of the recoverd value.
-	var item string
+	var msg string
 	switch v := recv.(type) {
 	case string:
-		item = v
+		msg = v
 	case error:
-		item = v.Error()
+		msg = v.Error()
 	default:
-		item = fmt.Sprintf("%v", recv)
+		msg = fmt.Sprintf("%v", recv)
 	}
 
-	item += "\n" + string(buf)
-	l.logs <- Msg{Fatal, item, tags, time.Now()}
+	msg += "\n" + string(stackTrace)
+	l.logs <- Msg{Fatal, msg, tags, time.Now()}
 }
 
 // Error logs a recoverable error.
