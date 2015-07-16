@@ -49,6 +49,9 @@ func TestNewLogLevel(t *testing.T) {
 	}
 
 	defer func() {
+		logLevelNames = oldLogLevelNames
+		logLevelIndices = oldLogLevelIndices
+
 		recv := recover()
 		if recv == nil {
 			t.Fatal("Expected a panic after creating 248 log levels, but didn't get one")
@@ -63,9 +66,6 @@ func TestNewLogLevel(t *testing.T) {
 		if got != expected {
 			t.Fatal("Expected the recoverd panic to be %s, but got %s", expected, got)
 		}
-
-		logLevelNames = oldLogLevelNames
-		logLevelIndices = oldLogLevelIndices
 	}()
 
 	NewLogLevel("myLogLevel249")
