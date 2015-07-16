@@ -73,7 +73,7 @@ func (l *Logger) Error(tags Tags, err error) {
 	l.logs <- Msg{Error, err.Error(), tags, time.Now(), nil}
 }
 
-// Warn logs a warning.
+// Warn logs a warning message.
 func (l *Logger) Warn(tags Tags, format string, v ...interface{}) {
 	l.logs <- Msg{Warn, fmt.Sprintf(format, v...), tags, time.Now(), nil}
 }
@@ -125,11 +125,12 @@ func (l *Logger) Close() error {
 //
 // Because the logging isn't done on the main thread it's possible that the
 // program will close before all the log items are written to the writer. It is
-// required to call logger.Close() before closing down the program! Otherwise
+// required to call Logger.Close() before closing down the program! Otherwise
 // logs might be lost!
 //
-// After calling logger.Close(), log.Errors can be accessed to check for any
-// writing errors from the log operations.
+// After calling Logger.Close(), log.Errors can be accessed to check for any
+// writing errors from the log operations. Any call to Logger.Error,Info etc
+// will panic!
 func New(name string, mw MsgWriter) (*Logger, error) {
 	log, err := new(name, mw)
 	if err != nil {

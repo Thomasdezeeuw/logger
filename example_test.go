@@ -87,7 +87,7 @@ func ExampleLogger_Fatal() {
 	}()
 	panic("Oh no!")
 	// Logs:
-	// 2015-03-01 17:20:52 [FATAL] file.go, main: Oh no!, goroutine 1 [running]:
+	// 2015-03-01 17:20:52 [Fatal] file.go, main: Oh no!, goroutine 1 [running]:
 	// github.com/Thomasdezeeuw/logger.(*Logger).Fatal(0xc08200a200,0xc08201fe00)
 	// 	/go/src/github.com/Thomasdezeeuw/logger/logger.go:97 +0x8d
 	// main.func·001()
@@ -116,7 +116,7 @@ func ExampleLogger_Info() {
 
 	log.Info(Tags{"file.go", "main"}, "my %s message", "info")
 	// Logs:
-	// 2015-03-01 17:20:52 [info] file.go, main: My info message
+	// 2015-03-01 17:20:52 [Info] file.go, main: My info message
 }
 
 func ExampleLogger_Debug() {
@@ -127,7 +127,7 @@ func ExampleLogger_Debug() {
 
 	log.Debug(Tags{"file.go", "main"}, "my %s message", "debug")
 	// Logs:
-	// 2015-03-01 17:20:52 [debug] file.go, main: My debug message
+	// 2015-03-01 17:20:52 [Debug] file.go, main: My debug message
 }
 
 func ExampleGet() {
