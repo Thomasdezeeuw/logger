@@ -104,6 +104,14 @@ func (l *Logger) Thumbstone(tags Tags, item string) {
 	l.logs <- Msg{Thumb, item, tags, time.Now(), nil}
 }
 
+// Message logs the given message.
+//
+// Note: the timestamp is always set to  the time of calling the function.
+func (l *Logger) Message(msg Msg) {
+	msg.Timestamp = time.Now()
+	l.logs <- msg
+}
+
 // Close blocks until all logs are written to the writer. After all logs are
 // written it will call Close() on the message writer.
 //

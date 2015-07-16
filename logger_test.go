@@ -41,11 +41,11 @@ func TestNew(t *testing.T) {
 		t.Fatal("Unexpected error, creating a new logger: " + err.Error())
 	}
 
-	t1, err := sendMessages(log)
+	t1, logLevel, err := sendMessages(log)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := checkMessages(t1, mw, true); err != nil {
+	if err := checkMessages(t1, mw, logLevel); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -80,7 +80,7 @@ func TestNewFile(t *testing.T) {
 		t.Fatal("Unexpected error, creating a new logger: " + err.Error())
 	}
 
-	t1, err := sendMessages(log)
+	t1, _, err := sendMessages(log)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -108,7 +108,7 @@ func TestNewConsole(t *testing.T) {
 		t.Fatal("Unexpected error, creating a new logger: " + err.Error())
 	}
 
-	t1, err := sendMessages(log)
+	t1, _, err := sendMessages(log)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,13 +174,13 @@ func TestCombine(t *testing.T) {
 		t.Fatal("Unexpected error, combining loggers: " + err.Error())
 	}
 
-	t1, err := sendMessages(log)
+	t1, logLevel, err := sendMessages(log)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := checkMessages(t1, mw1, false); err != nil {
+	if err := checkMessages(t1, mw1, logLevel); err != nil {
 		t.Fatal(err)
-	} else if err := checkMessages(t1, mw2, true); err != nil {
+	} else if err := checkMessages(t1, mw2, logLevel); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -220,9 +220,12 @@ func TestCombineExistingName(t *testing.T) {
 
 // sendMessages is linked with checkMessages and checkMessagesString, any
 // changes most be checked in those functions aswell.
-func sendMessages(log *Logger) (time.Time, error) {
+func sendMessages(log *Logger) (time.Time, LogLevel, error) {
 	tags := Tags{"test"}
 	t1 := time.Now().UTC().Truncate(time.Second)
+	myLogLevel := NewLogLevel("myLogLevel")
+	msg := Msg{Level: myLogLevel, Tags: tags}
+
 	log.Fatal(tags, errors.New("Fatal message1"))
 	log.Fatal(tags, "Fatal message2")
 	log.Fatal(tags, NewLogLevel("Fatal message3"))
@@ -244,24 +247,28 @@ func sendMessages(log *Logger) (time.Time, error) {
 	log.Debug(tags, "Debug message3")
 	log.ShowDebug = false
 	log.Debug(tags, "Debug message4")
+	msg.Msg = "myLogLevel message1"
+	log.Message(msg)
+	msg.Msg = "myLogLevel message2"
+	log.Message(msg)
+	msg.Msg = "myLogLevel message3"
+	log.Message(msg)
 
 	if err := log.Close(); err != nil {
-		return t1, errors.New("Unexpected error, closing logger: " + err.Error())
+		return t1, myLogLevel, errors.New("Unexpected error, closing logger: " + err.Error())
 	}
 
-	return t1, nil
+	return t1, myLogLevel, nil
 }
 
 // checkMessages is linked to sendMessages.
-func checkMessages(t1 time.Time, mw *msgWriter, debugEnabled bool) error {
-	if nMsgs := 18; !debugEnabled {
-		nMsgs = 12
-	} else if len(mw.msgs) != nMsgs {
+func checkMessages(t1 time.Time, mw *msgWriter, myLogLevel LogLevel) error {
+	if nMsgs := 21; len(mw.msgs) != nMsgs {
 		return fmt.Errorf("Expected %d messages, but got %d", nMsgs, len(mw.msgs))
 	}
 
 	for i, msg := range mw.msgs {
-		var expectedLevel = Debug
+		var expectedLevel = myLogLevel
 		if i < 3 {
 			expectedLevel = Fatal
 		} else if i >= 3 && i < 6 {
@@ -272,6 +279,8 @@ func checkMessages(t1 time.Time, mw *msgWriter, debugEnabled bool) error {
 			expectedLevel = Info
 		} else if i >= 12 && i < 15 {
 			expectedLevel = Thumb
+		} else if i >= 15 && i < 18 {
+			expectedLevel = Debug
 		}
 
 		expectedMsg := expectedLevel.String()
@@ -329,6 +338,9 @@ func checkMessagesString(t1 time.Time, gotBytes []byte) error {
 		t1Str + " [Debug] test: Debug message1",
 		t1Str + " [Debug] test: Debug message2",
 		t1Str + " [Debug] test: Debug message3",
+		t1Str + " [myLogLevel] test: myLogLevel message1",
+		t1Str + " [myLogLevel] test: myLogLevel message2",
+		t1Str + " [myLogLevel] test: myLogLevel message3",
 	}
 
 	i := 0

@@ -163,6 +163,25 @@ func ExampleLogger_Thumbstone() {
 	// 2015-03-01 17:20:52 [Thumb] example_test.go, myMaybeUnusedFunction: Still alive
 }
 
+func ExampleLogger_Message() {
+	log, err := NewConsole("App")
+	if err != nil {
+		panic(err)
+	}
+
+	myLogLevel := NewLogLevel("myLogLevel")
+	msg := Msg{
+		Level: myLogLevel,
+		Msg:   "Hi there",
+		Tags:  Tags{"example_test.go"},
+		// The timestamp gets set by log.Message
+	}
+
+	log.Message(msg)
+	// Logs:
+	// 2015-03-01 17:20:52 [myLogLevel] example_test.go: Hi there
+}
+
 func ExampleLogger_Close() {
 	log, err := NewConsole("App")
 	if err != nil {
