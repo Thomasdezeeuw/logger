@@ -56,41 +56,32 @@ type Logger struct {
 	closed chan struct{}
 }
 
-// Fatal logs a recovered error which could have killed the application.
+// Fatal logs a recovered error which could have killed the application. Fatal
+// adds a stack trace as Msg.Data to the Msg.
 func (l *Logger) Fatal(tags Tags, recv interface{}) {
 	// Capture the stack trace.
 	stackTrace := make([]byte, defaultStackSize)
 	n := runtime.Stack(stackTrace, false)
 	stackTrace = stackTrace[:n]
 
-	// Try to make some sense of the recoverd value.
-	var msg string
-	switch v := recv.(type) {
-	case string:
-		msg = v
-	case error:
-		msg = v.Error()
-	default:
-		msg = fmt.Sprintf("%v", recv)
-	}
-
+	msg := interfaceToString(recv)
 	msg += "\n" + string(stackTrace)
-	l.logs <- Msg{Fatal, msg, tags, time.Now()}
+	l.logs <- Msg{Fatal, msg, tags, time.Now(), nil}
 }
 
 // Error logs a recoverable error.
 func (l *Logger) Error(tags Tags, err error) {
-	l.logs <- Msg{Error, err.Error(), tags, time.Now()}
+	l.logs <- Msg{Error, err.Error(), tags, time.Now(), nil}
 }
 
 // Warn logs a warning.
 func (l *Logger) Warn(tags Tags, format string, v ...interface{}) {
-	l.logs <- Msg{Warn, fmt.Sprintf(format, v...), tags, time.Now()}
+	l.logs <- Msg{Warn, fmt.Sprintf(format, v...), tags, time.Now(), nil}
 }
 
 // Info logs an informational message.
 func (l *Logger) Info(tags Tags, format string, v ...interface{}) {
-	l.logs <- Msg{Info, fmt.Sprintf(format, v...), tags, time.Now()}
+	l.logs <- Msg{Info, fmt.Sprintf(format, v...), tags, time.Now(), nil}
 }
 
 // Debug logs the lowest level of information, only usefull when debugging
@@ -98,7 +89,7 @@ func (l *Logger) Info(tags Tags, format string, v ...interface{}) {
 // defaults to false.
 func (l *Logger) Debug(tags Tags, format string, v ...interface{}) {
 	if l.ShowDebug {
-		l.logs <- Msg{Debug, fmt.Sprintf(format, v...), tags, time.Now()}
+		l.logs <- Msg{Debug, fmt.Sprintf(format, v...), tags, time.Now(), nil}
 	}
 }
 
@@ -111,7 +102,7 @@ func (l *Logger) Debug(tags Tags, format string, v ...interface{}) {
 // easily locate the function. The tag "thumbstone" get added to the tags.
 func (l *Logger) Thumbstone(tags Tags, item string) {
 	tags = append(Tags{"thumbstone"}, tags...)
-	l.logs <- Msg{Thumb, item, tags, time.Now()}
+	l.logs <- Msg{Thumb, item, tags, time.Now(), nil}
 }
 
 // Close blocks until all logs are written to the writer. After all logs are
@@ -184,4 +175,18 @@ func logWriter(log *Logger) {
 	}
 
 	log.closed <- struct{}{}
+}
+
+func interfaceToString(value interface{}) string {
+	switch v := value.(type) {
+	case string:
+		return v
+	case fmt.Stringer:
+		return v.String()
+	case []byte:
+		return string(v)
+	case error:
+		return v.Error()
+	}
+	return fmt.Sprintf("%v", value)
 }

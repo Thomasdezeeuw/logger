@@ -14,17 +14,24 @@ type Msg struct {
 	Msg       string
 	Tags      Tags
 	Timestamp time.Time
+	Data      interface{}
 }
 
 // String creates a string message in the following format:
-//	YYYY-MM-DD HH:MM:SS [LEVEL] tag1, tag2: message
+//	YYYY-MM-DD HH:MM:SS [LEVEL] tag1, tag2: message, data
 //
-// Note: time is to the UTC timezone.
+// Note: if is data is nil it doesn't get added to the message.
+//
+// Note: time is set to the UTC timezone.
 func (msg *Msg) String() string {
 	m := msg.Timestamp.UTC().Format("2006-01-02 15:04:05")
 	m += " [" + msg.Level.String() + "] "
 	m += msg.Tags.String() + ": "
 	m += msg.Msg
+	if msg.Data != nil {
+		data := interfaceToString(msg.Data)
+		m += ", " + data
+	}
 	return m
 }
 

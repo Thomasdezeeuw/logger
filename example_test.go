@@ -19,10 +19,37 @@ func ExampleTags_String() {
 
 func ExampleMsg_String() {
 	t, _ := time.Parse("2006-01-02 15:04:05", "2015-05-24 17:39:50")
-	msg := Msg{Error, "My message", Tags{"tag1", "tag2"}, t}
+	msg := Msg{Error, "My message", Tags{"tag1", "tag2"}, t, nil}
 	fmt.Print(msg.String())
 	// Output:
 	// 2015-05-24 17:39:50 [Error] tag1, tag2: My message
+}
+
+// Keep in sync with the comment in ExampleMsg_String_data.
+type User struct {
+	Id   int
+	Name string
+}
+
+func (u *User) String() string {
+	return fmt.Sprintf("User: %s, id: %d", u.Name, u.Id)
+}
+
+func ExampleMsg_String_data() {
+	// type User struct {
+	// 	Id   int
+	// 	Name string
+	// }
+	//
+	// func (u *User) String() string {
+	// 	return fmt.Sprintf("User: %s, id: %d", u.Name, u.Id)
+	// }
+	data := User{1, "Thomas"}
+	t, _ := time.Parse("2006-01-02 15:04:05", "2015-05-24 17:39:50")
+	msg := Msg{Error, "My message", Tags{"tag1", "tag2"}, t, &data}
+	fmt.Print(msg.String())
+	// Output:
+	// 2015-05-24 17:39:50 [Error] tag1, tag2: My message, User: Thomas, id: 1
 }
 
 func ExampleNewLogLevel() {
