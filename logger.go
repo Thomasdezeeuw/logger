@@ -65,8 +65,7 @@ func (l *Logger) Fatal(tags Tags, recv interface{}) {
 	stackTrace = stackTrace[:n]
 
 	msg := interfaceToString(recv)
-	msg += "\n" + string(stackTrace)
-	l.logs <- Msg{Fatal, msg, tags, time.Now(), nil}
+	l.logs <- Msg{Fatal, msg, tags, time.Now(), stackTrace}
 }
 
 // Error logs a recoverable error.

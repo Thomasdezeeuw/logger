@@ -279,7 +279,7 @@ func checkMessages(t1 time.Time, mw *msgWriter, debugEnabled bool) error {
 		expectedMsg += fmt.Sprintf("%d", i%3+1)
 
 		if expectedLevel == Fatal {
-			msg.Msg = msg.Msg[:14] // trim stack trace from message.
+			msg.Data = nil // Drop the stack trace, it's never the same.
 		}
 
 		tags := Tags{"test"}
@@ -339,6 +339,9 @@ func checkMessagesString(t1 time.Time, gotBytes []byte) error {
 
 		if !strings.HasPrefix(got, t1Str) {
 			continue
+		} else if got[21:26] == Fatal.String() {
+			// Trim the stacktrace data, it's never the same.
+			got = got[:48]
 		}
 
 		if got != expected {
