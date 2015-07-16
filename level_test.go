@@ -48,6 +48,25 @@ func TestNewLogLevel(t *testing.T) {
 		}
 	}
 
-	logLevelNames = oldLogLevelNames
-	logLevelIndices = oldLogLevelIndices
+	defer func() {
+		recv := recover()
+		if recv == nil {
+			t.Fatal("Expected a panic after creating 248 log levels, but didn't get one")
+		}
+
+		got, ok := recv.(string)
+		if !ok {
+			t.Fatal("Expected the recoverd panic to be a string, but it's %v", recv)
+		}
+
+		expected := "ini: can't have more then 255 log levels"
+		if got != expected {
+			t.Fatal("Expected the recoverd panic to be %s, but got %s", expected, got)
+		}
+
+		logLevelNames = oldLogLevelNames
+		logLevelIndices = oldLogLevelIndices
+	}()
+
+	NewLogLevel("myLogLevel249")
 }
