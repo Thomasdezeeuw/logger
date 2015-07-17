@@ -97,11 +97,25 @@ func (l *Logger) Debug(tags Tags, format string, v ...interface{}) {
 // If a function is being suspected of being dead (not used) in production, add
 // a call to Thumbstone and check the production logs to see if you're right.
 //
-// The tags should include thing like the function name and file location, to
-// easily locate the function. The tag "thumbstone" get added to the tags.
-func (l *Logger) Thumbstone(tags Tags, item string) {
-	tags = append(Tags{"thumbstone"}, tags...)
-	l.logs <- Msg{Thumb, item, tags, time.Now(), nil}
+// The caller of the (possibly) dead function will be put in the message, using
+// the following format:
+//	Function functionName called by callerFunctionName, from file /path/to/file on line lineNumber
+// For example:
+//	Function myFunction called by main.main, from file /main.go on line 20
+func (l *Logger) Thumbstone(tags Tags, functionName string) {
+	var msg string
+
+	// Get caller information.
+	pc, file, line, ok := runtime.Caller(2)
+	if ok {
+		fn := runtime.FuncForPC(pc)
+		msg = fmt.Sprintf("Function %s called by %s, from file %s on line %d",
+			functionName, fn.Name(), file, line)
+	} else {
+		msg = "Function " + functionName + " called from unkown location"
+	}
+
+	l.logs <- Msg{Thumb, msg, tags, time.Now(), nil}
 }
 
 // Message logs the given message.

@@ -151,8 +151,8 @@ func ExampleLogger_Thumbstone() {
 	}
 
 	var myMaybeUnusedFunction = func() bool {
-		tags := Tags{"example_test.go", "myMaybeUnusedFunction"}
-		log.Thumbstone(tags, "Still alive")
+		tags := Tags{"example_test.go"}
+		log.Thumbstone(tags, "myMaybeUnusedFunction")
 
 		return false
 	}
@@ -160,7 +160,9 @@ func ExampleLogger_Thumbstone() {
 	myMaybeUnusedFunction()
 
 	// Logs:
-	// 2015-03-01 17:20:52 [Thumb] example_test.go, myMaybeUnusedFunction: Still alive
+	// 2015-03-01 17:20:52 [Thumb] example_test.go: Function myMaybeUnusedFunction
+	// called by logger.ExampleLogger_Thumbstone, from file
+	// /github.com/Thomasdezeeuw/logger/example_text.go on line 160
 }
 
 func ExampleLogger_Message() {

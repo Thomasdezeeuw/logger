@@ -238,9 +238,9 @@ func sendMessages(log *Logger) (time.Time, LogLevel, error) {
 	log.Info(tags, "Info message1")
 	log.Info(tags, "Info message2")
 	log.Info(tags, "Info message3")
-	log.Thumbstone(tags, "Thumb message1")
-	log.Thumbstone(tags, "Thumb message2")
-	log.Thumbstone(tags, "Thumb message3")
+	//log.Thumbstone(tags, "Thumb message1")
+	//log.Thumbstone(tags, "Thumb message2")
+	//log.Thumbstone(tags, "Thumb message3")
 	log.ShowDebug = true
 	log.Debug(tags, "Debug message1")
 	log.Debug(tags, "Debug message2")
@@ -263,7 +263,7 @@ func sendMessages(log *Logger) (time.Time, LogLevel, error) {
 
 // checkMessages is linked to sendMessages.
 func checkMessages(t1 time.Time, mw *msgWriter, myLogLevel LogLevel) error {
-	if nMsgs := 21; len(mw.msgs) != nMsgs {
+	if nMsgs := 18; len(mw.msgs) != nMsgs {
 		return fmt.Errorf("Expected %d messages, but got %d", nMsgs, len(mw.msgs))
 	}
 
@@ -278,8 +278,6 @@ func checkMessages(t1 time.Time, mw *msgWriter, myLogLevel LogLevel) error {
 		} else if i >= 9 && i < 12 {
 			expectedLevel = Info
 		} else if i >= 12 && i < 15 {
-			expectedLevel = Thumb
-		} else if i >= 15 && i < 18 {
 			expectedLevel = Debug
 		}
 
@@ -332,9 +330,9 @@ func checkMessagesString(t1 time.Time, gotBytes []byte) error {
 		t1Str + " [Info] test: Info message1",
 		t1Str + " [Info] test: Info message2",
 		t1Str + " [Info] test: Info message3",
-		t1Str + " [Thumb] thumbstone, test: Thumb message1",
-		t1Str + " [Thumb] thumbstone, test: Thumb message2",
-		t1Str + " [Thumb] thumbstone, test: Thumb message3",
+		//t1Str + " [Thumb] thumbstone, test: Thumb message1",
+		//t1Str + " [Thumb] thumbstone, test: Thumb message2",
+		//t1Str + " [Thumb] thumbstone, test: Thumb message3",
 		t1Str + " [Debug] test: Debug message1",
 		t1Str + " [Debug] test: Debug message2",
 		t1Str + " [Debug] test: Debug message3",
