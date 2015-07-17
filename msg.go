@@ -6,6 +6,8 @@ package logger
 
 import "time"
 
+const TimeFormat = "2006-01-02 15:04:05"
+
 // Msg is a message created by a log operation. The timezone of timestamp is
 // alway is current timezone, recommend is to log time in the UTC timezone, by
 // calling Msg.Timestamp.UTC(), Msg.String does this by default.
@@ -24,7 +26,7 @@ type Msg struct {
 //
 // Note: time is set to the UTC timezone.
 func (msg *Msg) String() string {
-	m := msg.Timestamp.UTC().Format("2006-01-02 15:04:05")
+	m := msg.Timestamp.UTC().Format(TimeFormat)
 	m += " [" + msg.Level.String() + "] "
 	m += msg.Tags.String() + ": "
 	m += msg.Msg

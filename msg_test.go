@@ -20,7 +20,7 @@ func TestMsg(t *testing.T) {
 	t.Parallel()
 
 	var now = time.Now()
-	var tStr = now.UTC().Format("2006-01-02 15:04:05")
+	var tStr = now.UTC().Format(TimeFormat)
 
 	var msgTests = []struct {
 		msg      Msg
