@@ -22,7 +22,9 @@ type Msg struct {
 // String creates a string message in the following format:
 //	YYYY-MM-DD HH:MM:SS [LEVEL] tag1, tag2: message, data
 //
-// Note: if is data is nil it doesn't get added to the message.
+// Note: if is data is nil it doesn't get added to the message, so the format
+// wil be:
+//	YYYY-MM-DD HH:MM:SS [LEVEL] tag1, tag2: message
 //
 // Note: time is set to the UTC timezone.
 func (msg *Msg) String() string {
