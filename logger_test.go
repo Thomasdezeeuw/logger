@@ -167,7 +167,6 @@ func TestCombine(t *testing.T) {
 	if err != nil {
 		t.Fatal("Unexpected error, creating a new logger: " + err.Error())
 	}
-	log2.ShowDebug = true
 
 	log, err := Combine(logName, log1, log2)
 	if err != nil {
@@ -241,11 +240,11 @@ func sendMessages(log *Logger) (time.Time, LogLevel, error) {
 	//log.Thumbstone(tags, "Thumb message1")
 	//log.Thumbstone(tags, "Thumb message2")
 	//log.Thumbstone(tags, "Thumb message3")
-	log.ShowDebug = true
+	log.SetMinLogLevel(Debug)
 	log.Debug(tags, "Debug message1")
 	log.Debug(tags, "Debug message2")
 	log.Debug(tags, "Debug message3")
-	log.ShowDebug = false
+	log.SetMinLogLevel(Info)
 	log.Debug(tags, "Debug message4")
 	msg.Msg = "myLogLevel message1"
 	log.Message(msg)

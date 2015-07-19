@@ -44,9 +44,6 @@ var loggers = map[string]*Logger{}
 type Logger struct {
 	Name string
 
-	// Wether or not to write Debug and Trace logs.
-	ShowDebug bool
-
 	// All errors, which can be read after Logger.Close is called, NOT THREAT
 	// SAFE.
 	Errors []error
