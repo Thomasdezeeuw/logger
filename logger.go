@@ -51,9 +51,10 @@ type Logger struct {
 	// SAFE.
 	Errors []error
 
-	mw     MsgWriter
-	logs   chan Msg
-	closed chan struct{}
+	mw          MsgWriter
+	minLogLevel LogLevel
+	logs        chan Msg
+	closed      chan struct{}
 }
 
 // Fatal logs a recovered error which could have killed the application. Fatal
@@ -87,9 +88,7 @@ func (l *Logger) Info(tags Tags, format string, v ...interface{}) {
 // the application. Only shows when Logger.ShowDebug is set to true, which
 // defaults to false.
 func (l *Logger) Debug(tags Tags, format string, v ...interface{}) {
-	if l.ShowDebug {
-		l.logs <- Msg{Debug, fmt.Sprintf(format, v...), tags, time.Now(), nil}
-	}
+	l.logs <- Msg{Debug, fmt.Sprintf(format, v...), tags, time.Now(), nil}
 }
 
 // Thumbstone indicates a function is still used in production. When developing
@@ -124,6 +123,13 @@ func (l *Logger) Thumbstone(tags Tags, functionName string) {
 func (l *Logger) Message(msg Msg) {
 	msg.Timestamp = time.Now()
 	l.logs <- msg
+}
+
+// Set the minimum log level to log.
+//
+// Note: NOT THREAT SAFE.
+func (l *Logger) SetMinLogLevel(min LogLevel) {
+	l.minLogLevel = min
 }
 
 // Close blocks until all logs are written to the writer. After all logs are
@@ -191,6 +197,10 @@ func new(name string, mw MsgWriter) (*Logger, error) {
 // Needs to be run in it's own goroutine, it blocks until log.logs is closed.
 func logWriter(log *Logger) {
 	for msg := range log.logs {
+		if msg.Level < log.minLogLevel {
+			continue
+		}
+
 		if err := log.mw.Write(msg); err != nil {
 			log.Errors = append(log.Errors, err)
 		}

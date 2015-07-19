@@ -4,8 +4,8 @@ import "errors"
 
 // Combine combines multiple loggers into a single logger.
 //
-// Note: ShowDebug is enable by default and should be set on the individual
-// loggers.
+// Note: SetMinLogLevel does not apply to a combined logger and should be set
+// on the underlying loggers.
 func Combine(name string, logs ...*Logger) (*Logger, error) {
 	if len(logs) == 0 {
 		return nil, errors.New("logger: Combine requires atleast one logger")
@@ -15,7 +15,6 @@ func Combine(name string, logs ...*Logger) (*Logger, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.ShowDebug = true
 
 	go combinedLogWriter(log, logs)
 	return log, nil
@@ -26,9 +25,7 @@ func combinedLogWriter(log *Logger, logs []*Logger) {
 	// Pass on every message to the underlying loggers.
 	for msg := range log.logs {
 		for _, log := range logs {
-			if msg.Level >= Debug || log.ShowDebug {
-				log.logs <- msg
-			}
+			log.logs <- msg
 		}
 	}
 
