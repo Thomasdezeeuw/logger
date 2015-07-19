@@ -368,3 +368,8 @@ func checkMessagesString(t1 time.Time, gotBytes []byte) error {
 	}
 	return nil
 }
+
+func compareError(format string, v interface{}, expected, got string) string {
+	return fmt.Sprintf("String compare error trying to compare: "+
+		format+"\nexpected: %q\ngot:      %q\n", v, expected, got)
+}

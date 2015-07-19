@@ -41,14 +41,12 @@ func TestMsg(t *testing.T) {
 	}
 
 	for _, test := range msgTests {
-		got, gotBytes := test.msg.String(), test.msg.Bytes()
+		got, gotBytes := test.msg.String(), string(test.msg.Bytes())
 
-		if got != string(gotBytes) {
-			t.Errorf("Expected %#v.Bytes() and .String() to return the same value, "+
-				"but got %q and %q, and want %q", got, string(gotBytes), test.expected)
+		if gotBytes != test.expected {
+			t.Error(compareError("Msg%v.Bytes()", test.msg, test.expected, gotBytes))
 		} else if got != test.expected {
-			t.Errorf("Expected %#v to return %q, got %q",
-				test.msg, test.expected, got)
+			t.Error(compareError("Msg%v.String()", test.msg, test.expected, got))
 		}
 	}
 }

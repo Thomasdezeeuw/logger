@@ -19,24 +19,23 @@ func TestLogLevelString(t *testing.T) {
 		{Error, "Error"},
 		{Fatal, "Fatal"},
 		{LogLevel(255), "LogLevel(255)"},
+		{NewLogLevel("myLogLevel"), "myLogLevel"},
 	}
 
 	for _, test := range tests {
-		got, gotBytes := test.lvl.String(), test.lvl.Bytes()
+		got, gotBytes := test.lvl.String(), string(test.lvl.Bytes())
 
-		if got != string(gotBytes) {
-			t.Errorf("LogLevel.Bytes() and String() don't return the same value, got %q"+
-				" and %q, want %q", got, string(gotBytes), test.expected)
+		if gotBytes != test.expected {
+			t.Error(compareError("LogLevel(%v).Bytes()", test.lvl, test.expected, gotBytes))
 		} else if got != test.expected {
-			t.Errorf("Expected LogLevel.String() to return %q, got %q",
-				test.expected, got)
+			t.Error(compareError("LogLevel(%v).String()", test.lvl, test.expected, got))
 		}
 	}
 }
 
 func TestNewLogLevel(t *testing.T) {
-	oldLogLevelNames := logLevelNames
-	oldLogLevelIndices := logLevelIndices
+	resetLogLevels()
+	defer resetLogLevels()
 
 	for i := 1; i <= 248; i++ {
 		expected := fmt.Sprintf("myLogLevel%d", i)
@@ -49,9 +48,6 @@ func TestNewLogLevel(t *testing.T) {
 	}
 
 	defer func() {
-		logLevelNames = oldLogLevelNames
-		logLevelIndices = oldLogLevelIndices
-
 		recv := recover()
 		if recv == nil {
 			t.Fatal("Expected a panic after creating 248 log levels, but didn't get one")
@@ -69,4 +65,14 @@ func TestNewLogLevel(t *testing.T) {
 	}()
 
 	NewLogLevel("myLogLevel249")
+}
+
+var (
+	defaultLogLevelNames   = logLevelNames
+	defaultLogLevelIndices = logLevelIndices
+)
+
+func resetLogLevels() {
+	logLevelNames = defaultLogLevelNames
+	logLevelIndices = defaultLogLevelIndices
 }
