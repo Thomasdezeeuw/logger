@@ -11,16 +11,16 @@ type LogLevel uint8
 // Log levels available by default.
 const (
 	Debug LogLevel = iota
-	Thumb
 	Info
 	Warn
 	Error
 	Fatal
+	Thumb
 )
 
 var (
-	logLevelNames   = "DebugThumbInfoWarnErrorFatal"
-	logLevelIndices = []int{0, 5, 10, 14, 18, 23, 28}
+	logLevelNames   = "DebugInfoWarnErrorFatalThumb"
+	logLevelIndices = []int{0, 5, 9, 13, 18, 23, 28}
 )
 
 // String return the name of the log level. Custom levels are also supported,
