@@ -34,10 +34,12 @@ func TestLogLevelString(t *testing.T) {
 }
 
 func TestNewLogLevel(t *testing.T) {
-	resetLogLevels()
-	defer resetLogLevels()
+	oldLogLevelNames := logLevelNames
+	oldLogLevelIndices := logLevelIndices
+	defer resetLogLevels(oldLogLevelNames, oldLogLevelIndices)
 
-	for i := 1; i <= 248; i++ {
+	// 248 - 1, already created in logger_test.go
+	for i := 1; i <= 247; i++ {
 		expected := fmt.Sprintf("myLogLevel%d", i)
 		myLogLevel := NewLogLevel(expected)
 
@@ -67,12 +69,7 @@ func TestNewLogLevel(t *testing.T) {
 	NewLogLevel("myLogLevel249")
 }
 
-var (
-	defaultLogLevelNames   = logLevelNames
-	defaultLogLevelIndices = logLevelIndices
-)
-
-func resetLogLevels() {
-	logLevelNames = defaultLogLevelNames
-	logLevelIndices = defaultLogLevelIndices
+func resetLogLevels(oldLogLevelNames string, oldLogLevelIndices []int) {
+	logLevelNames = oldLogLevelNames
+	logLevelIndices = oldLogLevelIndices
 }

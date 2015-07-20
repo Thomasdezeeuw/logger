@@ -13,13 +13,25 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
 )
 
+func init() {
+	_, filePath, _, ok := runtime.Caller(0)
+	if !ok {
+		panic("Can't get the current file name, required for testing")
+	}
+
+	expectedMsgs[7].Msg = "Function myFunction called by github.com/" +
+		"Thomasdezeeuw/logger.sendMessages, from file " + filePath + " on line 308"
+}
+
 type msgWriter struct {
-	msgs []Msg
+	msgs   []Msg
+	closed bool
 }
 
 func (mw *msgWriter) Write(msg Msg) error {
@@ -28,38 +40,45 @@ func (mw *msgWriter) Write(msg Msg) error {
 }
 
 func (mw *msgWriter) Close() error {
+	mw.closed = true
 	return nil
 }
 
 func TestNew(t *testing.T) {
 	t.Parallel()
 
-	const logName = "TestNew"
 	mw := &msgWriter{}
-	log, err := New(logName, mw)
+	log, err := New("TestNew", mw)
 	if err != nil {
-		t.Fatal("Unexpected error, creating a new logger: " + err.Error())
+		t.Fatal("Unexpected error creating a new logger: " + err.Error())
 	}
 
-	t1, logLevel, err := sendMessages(log)
-	if err != nil {
-		t.Fatal(err)
+	// Send test messages.
+	t1 := sendMessages(log)
+
+	// Make sure all messages are written.
+	if err := log.Close(); err != nil {
+		t.Fatal("Unexpected error closing the logger: " + err.Error())
+	} else if !mw.closed {
+		t.Fatal("We closed the logger, but the msg writer isn't closed")
 	}
-	if err := checkMessages(t1, mw, logLevel); err != nil {
+
+	// Check the messages.
+	if err := checkMessages(t1, mw, Debug); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestNewExistingName(t *testing.T) {
 	t.Parallel()
-
 	const logName = "TestNewExistingName"
+	const expectedErr = "logger: name " + logName + " already taken"
+
 	_, err := New(logName, &msgWriter{})
 	if err != nil {
-		t.Fatal("Unexpected error, creating a new logger: " + err.Error())
+		t.Fatal("Unexpected error creating a new logger: " + err.Error())
 	}
 
-	expectedErr := "logger: name " + logName + " already taken"
 	_, err = New(logName, &msgWriter{})
 	if err == nil {
 		t.Fatal("Expected an error when creating a logger with the same name")
@@ -69,60 +88,10 @@ func TestNewExistingName(t *testing.T) {
 	}
 }
 
-func TestNewFile(t *testing.T) {
-	t.Parallel()
-
-	const logName = "TestNewFile"
-	path := filepath.Join(os.TempDir(), "LOGGER_TEST.log")
-	defer os.Remove(path)
-	log, err := NewFile(logName, path)
-	if err != nil {
-		t.Fatal("Unexpected error, creating a new logger: " + err.Error())
-	}
-
-	t1, _, err := sendMessages(log)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	b, err := ioutil.ReadFile(path)
-	if err != nil {
-		t.Fatal("Unexpected error opening log file: " + err.Error())
-	}
-
-	if err := checkMessagesString(t1, b); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestNewConsole(t *testing.T) {
-	t.Parallel()
-
-	var buf bytes.Buffer
-	oldStderr := stderr
-	stderr = &buf
-
-	const logName = "TestNewConsole"
-	log, err := NewConsole(logName)
-	if err != nil {
-		t.Fatal("Unexpected error, creating a new logger: " + err.Error())
-	}
-
-	t1, _, err := sendMessages(log)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := checkMessagesString(t1, buf.Bytes()); err != nil {
-		t.Fatal(err)
-	}
-
-	stderr = oldStderr
-}
-
 func TestGet(t *testing.T) {
 	t.Parallel()
-
 	const logName = "TestGet"
+
 	log1, err := New(logName, &msgWriter{})
 	if err != nil {
 		t.Fatal("Unexpected error, creating a new logger: " + err.Error())
@@ -140,9 +109,9 @@ func TestGet(t *testing.T) {
 
 func TestGetNotFound(t *testing.T) {
 	t.Parallel()
-
 	const notLogName = "A logger which doesn't exists"
-	expectedErr := "logger: no logger found with name " + notLogName
+	const expectedErr = "logger: no logger found with name " + notLogName
+
 	_, err := Get(notLogName)
 	if err == nil {
 		t.Fatal("Expected an error when creating a logger with the same name")
@@ -152,10 +121,85 @@ func TestGetNotFound(t *testing.T) {
 	}
 }
 
+func TestNewConsole(t *testing.T) {
+	t.Parallel()
+	const logName = "TestNewConsole"
+
+	var buf bytes.Buffer
+	oldStderr := stderr
+	stderr = &buf
+
+	log, err := NewConsole(logName)
+	if err != nil {
+		t.Fatal("Unexpected error creating a new logger: " + err.Error())
+	}
+
+	t1 := sendMessages(log)
+
+	if err := log.Close(); err != nil {
+		t.Fatal("Unexpected error closing the logger: " + err.Error())
+	}
+
+	if err := checkMessagesString(t1, buf.String(), Debug); err != nil {
+		t.Fatal(err)
+	}
+
+	stderr = oldStderr
+}
+
+func TestNewWriter(t *testing.T) {
+	t.Parallel()
+	const logName = "TestNewWriterTruncated"
+
+	var buf bytes.Buffer
+
+	log, err := NewWriter(logName, &buf)
+	if err != nil {
+		t.Fatal("Unexpected error creating a new logger: " + err.Error())
+	}
+
+	t1 := sendMessages(log)
+
+	if err := log.Close(); err != nil {
+		t.Fatal("Unexpected error closing the logger: " + err.Error())
+	}
+
+	if err := checkMessagesString(t1, buf.String(), Debug); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestNewFile(t *testing.T) {
+	t.Parallel()
+	const logName = "TestNewFile"
+
+	filePath := filepath.Join(os.TempDir(), "LOGGER_TEST.log")
+	defer os.Remove(filePath)
+	log, err := NewFile(logName, filePath)
+	if err != nil {
+		t.Fatal("Unexpected error creating a new logger: " + err.Error())
+	}
+
+	t1 := sendMessages(log)
+
+	if err := log.Close(); err != nil {
+		t.Fatal("Unexpected error closing the logger: " + err.Error())
+	}
+
+	bytes, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		t.Fatal("Unexpected error opening log file: " + err.Error())
+	}
+
+	if err := checkMessagesString(t1, string(bytes), Debug); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestCombine(t *testing.T) {
 	t.Parallel()
-
 	const logName = "TestCombine"
+
 	mw1 := &msgWriter{}
 	log1, err := New(logName+"1", mw1)
 	if err != nil {
@@ -173,22 +217,26 @@ func TestCombine(t *testing.T) {
 		t.Fatal("Unexpected error, combining loggers: " + err.Error())
 	}
 
-	t1, logLevel, err := sendMessages(log)
-	if err != nil {
-		t.Fatal(err)
+	t1 := sendMessages(log)
+
+	if err := log.Close(); err != nil {
+		t.Fatal("Unexpected error closing the logger: " + err.Error())
+	} else if !mw1.closed || !mw2.closed {
+		t.Fatal("We closed the logger, but the underlying msg writers aren't closed")
 	}
-	if err := checkMessages(t1, mw1, logLevel); err != nil {
+
+	if err := checkMessages(t1, mw1, Debug); err != nil {
 		t.Fatal(err)
-	} else if err := checkMessages(t1, mw2, logLevel); err != nil {
+	} else if err := checkMessages(t1, mw2, Debug); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestCombineNone(t *testing.T) {
 	t.Parallel()
-
 	const logName = "TestCombineNone"
-	expectedErr := "logger: Combine requires atleast one logger"
+	const expectedErr = "logger: Combine requires atleast one logger"
+
 	_, err := Combine(logName)
 	if err == nil {
 		t.Fatal("Expected an error when creating a logger with the same name")
@@ -200,14 +248,14 @@ func TestCombineNone(t *testing.T) {
 
 func TestCombineExistingName(t *testing.T) {
 	t.Parallel()
-
 	const logName = "TestCombineExistingName"
+	const expectedErr = "logger: name " + logName + " already taken"
+
 	log, err := New(logName, &msgWriter{})
 	if err != nil {
 		t.Fatal("Unexpected error, creating a new logger: " + err.Error())
 	}
 
-	expectedErr := "logger: name " + logName + " already taken"
 	_, err = Combine(logName, log)
 	if err == nil {
 		t.Fatal("Expected an error when creating a logger with the same name")
@@ -217,154 +265,150 @@ func TestCombineExistingName(t *testing.T) {
 	}
 }
 
-// sendMessages is linked with checkMessages and checkMessagesString, any
-// changes most be checked in those functions aswell.
-func sendMessages(log *Logger) (time.Time, LogLevel, error) {
-	tags := Tags{"test"}
-	t1 := time.Now().UTC().Truncate(time.Second)
-	myLogLevel := NewLogLevel("myLogLevel")
-	msg := Msg{Level: myLogLevel, Tags: tags}
-
-	log.Fatal(tags, errors.New("Fatal message1"))
-	log.Fatal(tags, "Fatal message2")
-	log.Fatal(tags, NewLogLevel("Fatal message3"))
-	log.Error(tags, errors.New("Error message1"))
-	log.Error(tags, errors.New("Error message2"))
-	log.Error(tags, errors.New("Error message3"))
-	log.Warn(tags, "Warn message1")
-	log.Warn(tags, "Warn message2")
-	log.Warn(tags, "Warn message3")
-	log.Info(tags, "Info message1")
-	log.Info(tags, "Info message2")
-	log.Info(tags, "Info message3")
-	//log.Thumbstone(tags, "Thumb message1")
-	//log.Thumbstone(tags, "Thumb message2")
-	//log.Thumbstone(tags, "Thumb message3")
-	log.SetMinLogLevel(Debug)
-	log.Debug(tags, "Debug message1")
-	log.Debug(tags, "Debug message2")
-	log.Debug(tags, "Debug message3")
-	log.SetMinLogLevel(Info)
-	log.Debug(tags, "Debug message4")
-	msg.Msg = "myLogLevel message1"
-	log.Message(msg)
-	msg.Msg = "myLogLevel message2"
-	log.Message(msg)
-	msg.Msg = "myLogLevel message3"
-	log.Message(msg)
-
-	if err := log.Close(); err != nil {
-		return t1, myLogLevel, errors.New("Unexpected error, closing logger: " + err.Error())
-	}
-
-	return t1, myLogLevel, nil
+type MessageData struct {
+	i   int
+	str string
 }
 
-// checkMessages is linked to sendMessages.
-func checkMessages(t1 time.Time, mw *msgWriter, myLogLevel LogLevel) error {
-	if nMsgs := 18; len(mw.msgs) != nMsgs {
-		return fmt.Errorf("Expected %d messages, but got %d", nMsgs, len(mw.msgs))
+var (
+	defaultTags           = Tags{"test"}
+	defaultCustomLogLevel = NewLogLevel("myLogLevel")
+
+	debugMsg    = "Debug message"
+	infoMsg     = "Info message"
+	warnMsg     = "Warn message"
+	errorMsg    = "Error message"
+	fatalMsg1   = "Fatal message1"
+	fatalMsg2   = "Fatal message2"
+	fatalMsg3   = "0" // Actual integer used in logging.
+	messageMsg  = "myLogLevel message"
+	messageData = MessageData{100, "hello"}
+)
+
+func sendMessages(log *Logger) time.Time {
+	t1 := time.Now().Truncate(time.Second)
+	log.Debug(defaultTags, debugMsg)
+	log.Info(defaultTags, infoMsg)
+	log.Warn(defaultTags, warnMsg)
+	log.Error(defaultTags, errors.New(errorMsg))
+	log.Fatal(defaultTags, errors.New(fatalMsg1))
+	log.Fatal(defaultTags, fatalMsg2)
+	log.Fatal(defaultTags, 0)
+	func() { // fake a unused function, to have a consistent caller.
+		log.Thumbstone(defaultTags, "myFunction")
+	}()
+	log.Message(Msg{Level: defaultCustomLogLevel, Msg: messageMsg,
+		Tags: defaultTags, Data: messageData})
+
+	return t1
+}
+
+var expectedMsgs = []Msg{
+	Msg{Level: Debug, Msg: debugMsg, Tags: defaultTags},
+	Msg{Level: Info, Msg: infoMsg, Tags: defaultTags},
+	Msg{Level: Warn, Msg: warnMsg, Tags: defaultTags},
+	Msg{Level: Error, Msg: errorMsg, Tags: defaultTags},
+	Msg{Level: Fatal, Msg: fatalMsg1, Tags: defaultTags},
+	Msg{Level: Fatal, Msg: fatalMsg2, Tags: defaultTags},
+	Msg{Level: Fatal, Msg: fatalMsg3, Tags: defaultTags},
+	Msg{Level: Thumb, Tags: defaultTags}, // Msg added by init.
+	Msg{Level: defaultCustomLogLevel, Msg: messageMsg, Tags: defaultTags,
+		Data: messageData},
+}
+
+func checkMessages(t1 time.Time, mw *msgWriter, minLevel LogLevel) error {
+	// Get the message we can expect.
+	if minLevel > Fatal {
+		minLevel += 2 // We send 3 fatal messages.
+	}
+	var msgs = make([]Msg, len(expectedMsgs)-int(minLevel))
+	copy(msgs, expectedMsgs[int(minLevel):])
+
+	if len(mw.msgs) != len(msgs) {
+		return fmt.Errorf("Expected to get %d messages, but got %d messages",
+			len(msgs), len(mw.msgs))
 	}
 
-	for i, msg := range mw.msgs {
-		var expectedLevel = myLogLevel
-		if i < 3 {
-			expectedLevel = Fatal
-		} else if i >= 3 && i < 6 {
-			expectedLevel = Error
-		} else if i >= 6 && i < 9 {
-			expectedLevel = Warn
-		} else if i >= 9 && i < 12 {
-			expectedLevel = Info
-		} else if i >= 12 && i < 15 {
-			expectedLevel = Debug
+	for i, got := range mw.msgs {
+		expected := msgs[i]
+
+		// Add our timestamp to the expected message and truncate the time of the
+		// actual message, because 1 second is accurate enough.
+		expected.Timestamp = t1
+		got.Timestamp = got.Timestamp.Truncate(time.Second)
+
+		if expected.Level == Fatal {
+			bytes, ok := got.Data.([]byte)
+			if !ok {
+				return fmt.Errorf("Expected message %d to have a stack trace, but it "+
+					"didn't, got: %v", got.Data)
+			} else if len(bytes) < 10 {
+				return fmt.Errorf("The expected stacktrace seems empty, got: %s",
+					string(bytes))
+			}
+
+			// Can't compare the strack trace any better.
+			got.Data = nil
 		}
 
-		expectedMsg := expectedLevel.String()
-		expectedMsg = strings.TrimSpace(expectedMsg) + " message"
-		expectedMsg += fmt.Sprintf("%d", i%3+1)
-
-		if expectedLevel == Fatal {
-			msg.Data = nil // Drop the stack trace, it's never the same.
-		}
-
-		tags := Tags{"test"}
-		if expectedLevel == Thumb {
-			tags = Tags{"thumbstone", "test"}
-		}
-
-		if msg.Level != expectedLevel {
-			return fmt.Errorf("Expected msg.Level to be %q, but got %q",
-				expectedLevel, msg.Level)
-		} else if msg.Msg != expectedMsg {
-			return fmt.Errorf("Expected msg.Msg to be %q, but got %q",
-				expectedMsg, msg.Msg)
-		} else if !reflect.DeepEqual(msg.Tags, tags) {
-			return fmt.Errorf("Expected msg.Tags to be %q, but got %q",
-				tags.String(), msg.Tags.String())
-		} else if !msg.Timestamp.Truncate(time.Second).Equal(t1) {
-			return fmt.Errorf("Expected msg.Timestamp to be %v, but got %v",
-				t1, msg.Timestamp)
+		if !reflect.DeepEqual(got, expected) {
+			return fmt.Errorf("Expected message %d to be %v, but got %v",
+				i, expected, got)
 		}
 	}
 
 	return nil
 }
 
-// checkMessagesString is linked to sendMessages.
-func checkMessagesString(t1 time.Time, gotBytes []byte) error {
-	t1Str := t1.Format("2006-01-02 15:04:05")
-
-	// not the prettiest solution, but good enough...
-	expectedLines := []string{
-		t1Str + " [Fatal] test: Fatal message1",
-		t1Str + " [Fatal] test: Fatal message2",
-		t1Str + " [Fatal] test: Fatal message3",
-		t1Str + " [Error] test: Error message1",
-		t1Str + " [Error] test: Error message2",
-		t1Str + " [Error] test: Error message3",
-		t1Str + " [Warn] test: Warn message1",
-		t1Str + " [Warn] test: Warn message2",
-		t1Str + " [Warn] test: Warn message3",
-		t1Str + " [Info] test: Info message1",
-		t1Str + " [Info] test: Info message2",
-		t1Str + " [Info] test: Info message3",
-		//t1Str + " [Thumb] thumbstone, test: Thumb message1",
-		//t1Str + " [Thumb] thumbstone, test: Thumb message2",
-		//t1Str + " [Thumb] thumbstone, test: Thumb message3",
-		t1Str + " [Debug] test: Debug message1",
-		t1Str + " [Debug] test: Debug message2",
-		t1Str + " [Debug] test: Debug message3",
-		t1Str + " [myLogLevel] test: myLogLevel message1",
-		t1Str + " [myLogLevel] test: myLogLevel message2",
-		t1Str + " [myLogLevel] test: myLogLevel message3",
+func checkMessagesString(t1 time.Time, gotString string, minLevel LogLevel) error {
+	// Get the message we can expect.
+	if minLevel > Fatal {
+		minLevel += 2 // We send 3 fatal messages.
 	}
+	var msgs = make([]Msg, len(expectedMsgs)-int(minLevel))
+	copy(msgs, expectedMsgs[int(minLevel):])
 
 	i := 0
-	s := bufio.NewScanner(bytes.NewReader(gotBytes))
+	s := bufio.NewScanner(strings.NewReader(gotString))
+	t1Str := t1.UTC().Format(TimeFormat)
+
 	for s.Scan() {
 		got := s.Text()
-		expected := expectedLines[i]
 
 		if !strings.HasPrefix(got, t1Str) {
+			// Likely a stacktrace from Logger.Fatal.
 			continue
-		} else if got[21:26] == Fatal.String() {
-			// Trim the stacktrace data, it's never the same.
-			got = got[:48]
+		}
+
+		if i >= len(msgs) {
+			return fmt.Errorf("Unexpected log message #%d: %s", i+1, got)
+		}
+		expectedMsg := msgs[i]
+		expectedMsg.Timestamp = t1
+		expected := expectedMsg.String()
+
+		if expectedMsg.Level == Fatal {
+			// Trim the stacktrace data.
+			i := strings.LastIndex(got, ",")
+			if i != -1 {
+				got = got[:i]
+			}
 		}
 
 		if got != expected {
-			return fmt.Errorf("Error comparing line %d\nExpected: %q\nbut got:  %q",
-				i, expected, got)
+			return errors.New(compareError("Log message #%d", i+1, expected, got))
 		}
 		i++
 	}
 
-	if i != len(expectedLines) {
-		return errors.New("Didn't get the same amount of lines as expected")
-	} else if err := s.Err(); err != nil {
+	if err := s.Err(); err != nil {
 		return fmt.Errorf("Unexpected scanning error: %s", err.Error())
 	}
+
+	if i != len(msgs) {
+		return fmt.Errorf("Expected %d log messages, but got %d", len(msgs), i)
+	}
+
 	return nil
 }
 
