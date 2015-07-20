@@ -29,6 +29,15 @@ func init() {
 		"Thomasdezeeuw/logger.sendMessages, from file " + filePath + " on line 308"
 }
 
+// todo: test combine with different log levels.
+// todo: check log.Errors.
+// todo: send and check message setting SetMinLogLevel().
+// todo: Check if logWriter() (running in goroutine) is closed.
+// todo: Check if combinedLogWriter() (running in goroutine) is closed.
+// todo: test with bad msgWriter, return errors.
+// todo: test with bad io.Writer return errors and short writes.
+// todo: test NewFile with bad filepath.
+
 type msgWriter struct {
 	msgs   []Msg
 	closed bool
