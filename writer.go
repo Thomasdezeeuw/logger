@@ -17,7 +17,7 @@ func (iw *ioWriterMsgWriter) Write(msg Msg) error {
 	} else if n != len(bytes) {
 		return io.ErrShortWrite
 	}
-	return err
+	return nil
 }
 
 func (iw *ioWriterMsgWriter) Close() error {
