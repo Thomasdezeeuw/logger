@@ -184,6 +184,21 @@ func ExampleLogger_Message() {
 	// 2015-03-01 17:20:52 [myLogLevel] example_test.go: Hi there
 }
 
+func ExampleLogger_SetMinLogLevel() {
+	log, err := NewConsole("App")
+	if err != nil {
+		panic(err)
+	}
+	log.SetMinLogLevel(Info)
+
+	// This debug message will never show.
+	log.Debug(Tags{"file.go", "main"}, "my %s message", "debug")
+
+	log.Info(Tags{"file.go", "main"}, "my %s message", "info")
+	// Logs:
+	// 2015-03-01 17:20:52 [Info] file.go, main: My info message
+}
+
 func ExampleLogger_Close() {
 	log, err := NewConsole("App")
 	if err != nil {
