@@ -82,6 +82,7 @@ func ExampleLogger_Fatal() {
 	if err != nil {
 		panic(err)
 	}
+	defer log.Close()
 
 	defer func() {
 		if recv := recover(); recv != nil {
@@ -104,6 +105,7 @@ func ExampleLogger_Error() {
 	if err != nil {
 		panic(err)
 	}
+	defer log.Close()
 
 	err = errors.New("Some error")
 	log.Error(Tags{"file.go", "main"}, err)
@@ -116,6 +118,7 @@ func ExampleLogger_Warn() {
 	if err != nil {
 		panic(err)
 	}
+	defer log.Close()
 
 	log.Warn(Tags{"file.go", "main"}, "my %s message", "warning")
 	// Logs:
@@ -127,6 +130,7 @@ func ExampleLogger_Info() {
 	if err != nil {
 		panic(err)
 	}
+	defer log.Close()
 
 	log.Info(Tags{"file.go", "main"}, "my %s message", "info")
 	// Logs:
@@ -138,6 +142,7 @@ func ExampleLogger_Debug() {
 	if err != nil {
 		panic(err)
 	}
+	defer log.Close()
 
 	log.Debug(Tags{"file.go", "main"}, "my %s message", "debug")
 	// Logs:
@@ -149,6 +154,7 @@ func ExampleLogger_Thumbstone() {
 	if err != nil {
 		panic(err)
 	}
+	defer log.Close()
 
 	var myMaybeUnusedFunction = func() bool {
 		tags := Tags{"example_test.go"}
@@ -158,7 +164,6 @@ func ExampleLogger_Thumbstone() {
 	}
 
 	myMaybeUnusedFunction()
-
 	// Logs:
 	// 2015-03-01 17:20:52 [Thumb] example_test.go: Function myMaybeUnusedFunction
 	// called by logger.ExampleLogger_Thumbstone, from file
@@ -170,6 +175,7 @@ func ExampleLogger_Message() {
 	if err != nil {
 		panic(err)
 	}
+	defer log.Close()
 
 	myLogLevel := NewLogLevel("myLogLevel")
 	msg := Msg{
@@ -190,6 +196,7 @@ func ExampleLogger_SetMinLogLevel() {
 		panic(err)
 	}
 	log.SetMinLogLevel(Info)
+	defer log.Close()
 
 	// This debug message will never show.
 	log.Debug(Tags{"file.go", "main"}, "my %s message", "debug")
@@ -220,6 +227,7 @@ func ExampleNewConsole() {
 	if err != nil {
 		panic(err)
 	}
+	defer log.Close()
 
 	log.Info(Tags{"file.go", "main"}, "my %s message", "info")
 	// Logs to stderr:
@@ -232,6 +240,7 @@ func ExampleNewFile() {
 	if err != nil {
 		panic(err)
 	}
+	defer log.Close()
 
 	log.Info(Tags{"file.go", "main"}, "my %s message", "info")
 	// Logs to file:
@@ -264,6 +273,7 @@ func ExampleCombine() {
 	if err != nil {
 		panic(err)
 	}
+	defer log.Close()
 
 	log.Info(Tags{"file.go", "main"}, "my %s message", "info")
 	// Logs to stderr and/or the file:
@@ -276,6 +286,7 @@ func ExampleNewWriter() {
 	if err != nil {
 		panic(err)
 	}
+	defer log.Close()
 
 	log.Info(Tags{"file.go", "main"}, "my %s message", "info")
 	// Logs to the buffer:
@@ -288,6 +299,9 @@ func ExampleGet() {
 	if err != nil {
 		panic(err)
 	}
+
+	// Only close the logger in a single location.
+	defer log1.Close()
 
 	// Then get the logger somewhere else.
 	log2, err := Get("App")
