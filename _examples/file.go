@@ -10,31 +10,30 @@ import (
 	"github.com/Thomasdezeeuw/logger"
 )
 
-var log *logger.Logger
-
 func init() {
-	var err error
 	// Setup a new logger with a name, path to a file and the buffer size.
-	log, err = logger.NewFile("App", "./tmp.log")
+	log, err := logger.NewFile("App", "./tmp.log")
 	if err != nil {
 		panic(err)
 	}
 
-	// Show debug messages.
-	log.ShowDebug = true
-
-	// Elsewhere in the application we can retrieve the logger by name.
-	log2, err := logger.Get("App")
-	if err != nil {
-		panic(err)
-	}
-
-	log2.Info(logger.Tags{"file.go", "init"}, "Goes to the same file")
+	log.Info(logger.Tags{"file.go", "init"}, "Create a new file logger")
 }
 
+var log *logger.Logger
+
 func main() {
+	var err error
+	// Elsewhere in the application we can retrieve the logger by name.
+	log, err = logger.Get("App")
+	if err != nil {
+		panic(err)
+	}
+
 	// IMPORTANT! Otherwise the file will never be written!
 	defer log.Close()
+
+	log.Info(logger.Tags{"file.go", "main"}, "This goes to the same file")
 
 	defer func() {
 		// Log an recoverd error (panic).
@@ -44,8 +43,7 @@ func main() {
 	}()
 
 	// Log an error.
-	err := doSomething("stuff")
-	if err != nil {
+	if err := doSomething("stuff"); err != nil {
 		log.Error(logger.Tags{"file.go", "main"}, err)
 	}
 
@@ -65,5 +63,5 @@ func doSomething(str string) error {
 
 func unusedFunction() {
 	// Log thumbstone, to see if the function is used in production.
-	log.Thumbstone("unusedFunction in _examples/file.go")
+	log.Thumbstone(logger.Tags{"file.go"}, "unusedFunction")
 }

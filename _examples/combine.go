@@ -10,65 +10,82 @@ import (
 	"github.com/Thomasdezeeuw/logger"
 )
 
-var log *logger.Logger
+const logName = "App"
 
 func init() {
 	// Setup a new logger with a name, path to a console and the buffer size.
-	log1, err := logger.NewConsole("Console")
+	consoleLog, err := logger.NewConsole(logName + "Console")
 	if err != nil {
 		panic(err)
 	}
 
 	// Setup a new logger with a name, path to a file and the buffer size.
-	log2, err := logger.NewFile("File", "./tmp.log")
+	fileLog, err := logger.NewFile(logName+"File", "./tmp.log")
 	if err != nil {
 		panic(err)
 	}
+
+	// On the console we don't want all the debug messages, but in the file log
+	// we do want them.
+	consoleLog.SetMinLogLevel(logger.Info)
+	fileLog.SetMinLogLevel(logger.Debug)
 
 	// Combine the to logger into a single one, so we log to a file aswell as
 	// the console.
-	log, err = logger.Combine("App", log1, log2)
+	log, err = logger.Combine("App", consoleLog, fileLog)
 	if err != nil {
 		panic(err)
 	}
 
-	// Show debug messages for both logger.
-	// This overwrite the settings in the individual loggers.
-	log.ShowDebug = true
+	// This will only showup in the file log.
+	log.Debug(logger.Tags{"console.go", "init"}, "Setup console and file logger")
 }
 
+var log *logger.Logger
+
 func main() {
-	// IMPORTANT! Otherwise the file will never be written!
+	var err error
+	// Elsewhere in the application we can retrieve the logger by name.
+	log, err = logger.Get(logName)
+	if err != nil {
+		panic(err)
+	}
+
+	// IMPORTANT! Because the logger is asynchronous we need to make sure that
+	// everything is written to the log.
 	defer log.Close()
 
 	defer func() {
 		// Log an recoverd error (panic).
 		if recv := recover(); recv != nil {
-			log.Fatal(logger.Tags{"file.go", "main"}, recv)
+			log.Fatal(logger.Tags{"console.go", "main"}, recv)
 		}
 	}()
 
 	// Log an error.
-	err := doSomething("stuff")
+	err = doSomething("stuff")
 	if err != nil {
-		log.Error(logger.Tags{"file.go", "main"}, err)
+		log.Error(logger.Tags{"console.go", "main"}, err)
 	}
 
 	// Log an informational message.
 	address := "localhost:8080"
-	log.Info(logger.Tags{"file.go", "main"}, "Listening on address %s", address)
+	log.Info(logger.Tags{"console.go", "main"}, "Listening on address %s", address)
 
-	panic("Oh no!")
+	unusedFunction()
 }
 
 func doSomething(str string) error {
 	// Log an debug message.
-	log.Debug(logger.Tags{"file.go", "doSomething"}, "doSomething(%q)", str)
+	log.Debug(logger.Tags{"console.go", "doSomething"}, "doSomething(%q) called", str)
 
 	return errors.New("oops")
 }
 
 func unusedFunction() {
 	// Log thumbstone, to see if the function is used in production.
-	log.Thumbstone("unusedFunction in _examples/file.go")
+	log.Thumbstone(logger.Tags{"console.go"}, "unusedFunction")
+
+	// It's unused for a reason.
+	panic("Oh no!")
 }

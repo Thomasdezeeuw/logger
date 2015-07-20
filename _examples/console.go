@@ -10,30 +10,30 @@ import (
 	"github.com/Thomasdezeeuw/logger"
 )
 
-var log *logger.Logger
+const logName = "App"
 
 func init() {
-	var err error
 	// Setup a new logger with a name, path to a console and the buffer size.
-	log, err = logger.NewConsole("App")
+	log, err := logger.NewConsole(logName)
 	if err != nil {
 		panic(err)
 	}
 
-	// Show debug messages.
-	log.ShowDebug = true
-
-	// Elsewhere in the application we can retrieve the logger by name.
-	log2, err := logger.Get("App")
-	if err != nil {
-		panic(err)
-	}
-
-	log2.Info(logger.Tags{"console.go", "init"}, "Goes to the same console")
+	log.Debug(logger.Tags{"console.go", "init"}, "Setup new console logger")
 }
 
+var log *logger.Logger
+
 func main() {
-	// IMPORTANT! Otherwise the console will never be written!
+	var err error
+	// Elsewhere in the application we can retrieve the logger by name.
+	log, err = logger.Get(logName)
+	if err != nil {
+		panic(err)
+	}
+
+	// IMPORTANT! Because the logger is asynchronous we need to make sure that
+	// everything is written to the log.
 	defer log.Close()
 
 	defer func() {
@@ -44,7 +44,7 @@ func main() {
 	}()
 
 	// Log an error.
-	err := doSomething("stuff")
+	err = doSomething("stuff")
 	if err != nil {
 		log.Error(logger.Tags{"console.go", "main"}, err)
 	}
@@ -53,17 +53,20 @@ func main() {
 	address := "localhost:8080"
 	log.Info(logger.Tags{"console.go", "main"}, "Listening on address %s", address)
 
-	panic("Oh no!")
+	unusedFunction()
 }
 
 func doSomething(str string) error {
 	// Log an debug message.
-	log.Debug(logger.Tags{"console.go", "doSomething"}, "doSomething(%q)", str)
+	log.Debug(logger.Tags{"console.go", "doSomething"}, "doSomething(%q) called", str)
 
 	return errors.New("oops")
 }
 
 func unusedFunction() {
 	// Log thumbstone, to see if the function is used in production.
-	log.Thumbstone("unusedFunction in _examples/console.go")
+	log.Thumbstone(logger.Tags{"console.go"}, "unusedFunction")
+
+	// It's unused for a reason.
+	panic("Oh no!")
 }

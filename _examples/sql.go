@@ -7,32 +7,50 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/Thomasdezeeuw/logger"
 	_ "github.com/go-sql-driver/mysql"
 )
 
 // SQL Logs table:
-// id 		INT AUTO_INCREMENT
-// date		DATETIME
-// level	ENUM("FATAL", "ERROR", "INFO", "DEBUG", "THUMB")
-// tags		VARCHAR
-// msg		VARCHAR
+//	CREATE TABLE IF NOT EXISTS `logs` (
+//		`id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+//		`date` datetime NOT NULL,
+//		`level` enum('FATAL','ERROR','INFO','DEBUG','THUMB') NOT NULL,
+//		`tags` varchar(100) NOT NULL,
+//		`msg` varchar(200) NOT NULL,
+//		`data` varchar(500) DEFAULT NULL,
+//		PRIMARY KEY (`id`)
+//	);
 
-var queryStr = "INSERT INTO Logs (date, level, tags, msg) VALUES (?, ?, ?, ?)"
+var queryStr = "INSERT INTO Logs (date, level, tags, msg, data) VALUES (?, ?, ?, ?, ?)"
 
 type sqlMsgWriter struct {
 	query *sql.Stmt
 }
 
 func (sql *sqlMsgWriter) Write(msg logger.Msg) error {
-	_, err := sql.query.Exec(msg.Timestamp, msg.Level, msg.Tags.String(), msg.Msg)
+	var dataStr string
+	if msg.Level == logger.Fatal {
+		dataBytes, ok := msg.Data.([]byte)
+		if ok {
+			dataStr = string(dataBytes)
+		}
+	}
+
+	result, err := sql.query.Exec(msg.Timestamp.UTC(), msg.Level.String(),
+		msg.Tags.String(), msg.Msg, dataStr)
 	if err != nil {
 		// It might be usefull to have some sort of backup log, like a file or
 		// stdout to catch these kind of errors (altough they should be caught with
 		// good testing and a dependable database).
 		log.Error(logger.Tags{"sql.go", "sqlMsgWriter.Write"}, err)
+	} else if n, err := result.RowsAffected(); err == nil && n != 1 {
+		err := fmt.Errorf("Wanted to create a single log entry, but created %d", n)
+		log.Error(logger.Tags{"sql.go", "sqlMsgWriter.Write"}, err)
 	}
+
 	return err
 }
 
@@ -61,9 +79,6 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-
-	// Show debug messages.
-	log.ShowDebug = true
 }
 
 func main() {
@@ -87,7 +102,7 @@ func main() {
 	address := "localhost:8080"
 	log.Info(logger.Tags{"sql.go", "main"}, "Listening on address %s", address)
 
-	panic(errors.New("Oh no!"))
+	unusedFunction()
 }
 
 func doSomething(str string) error {
@@ -99,5 +114,7 @@ func doSomething(str string) error {
 
 func unusedFunction() {
 	// Log thumbstone, to see if the function is used in production.
-	log.Thumbstone("unusedFunction in _examples/sql.go")
+	log.Thumbstone(logger.Tags{"sql.go"}, "unusedFunction")
+
+	panic(errors.New("Oh no!"))
 }

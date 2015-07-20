@@ -13,32 +13,12 @@ import (
 	"github.com/Thomasdezeeuw/logger"
 )
 
-type jsonWriter struct {
-	f   *os.File
-	bw  *bufio.Writer
-	enc *json.Encoder
-}
-
-func (jw *jsonWriter) Write(msg logger.Msg) error {
-	return jw.enc.Encode(msg)
-}
-
-func (jw *jsonWriter) Close() error {
-	jw.bw.Flush()
-	return jw.f.Close()
-}
-
 var log *logger.Logger
 
 func init() {
-	f, err := os.OpenFile("./tmp.log.json", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		panic(err)
-	}
-	bw := bufio.NewWriter(f)
-	mw := &jsonWriter{f, bw, json.NewEncoder(bw)}
-
-	log, err = logger.New("AppJSON", mw)
+	var err error
+	mw := newJSONWriter()
+	log, err = logger.New("AppJSON", &mw)
 	if err != nil {
 		panic(err)
 	}
@@ -77,5 +57,56 @@ func doSomething(str string) error {
 
 func unusedFunction() {
 	// Log thumbstone, to see if the function is used in production.
-	log.Thumbstone("unusedFunction in _examples/json.go")
+	log.Thumbstone(logger.Tags{"json.go"}, "unusedFunction")
+}
+
+type jsonLog struct {
+	Level     string
+	Message   string
+	Tags      string
+	Timestamp string
+	Data      string
+}
+
+type jsonWriter struct {
+	f   *os.File
+	w   *bufio.Writer
+	enc *json.Encoder
+}
+
+func (jw *jsonWriter) Write(msg logger.Msg) error {
+	json := jsonLog{
+		Level:     msg.Level.String(),
+		Message:   msg.Msg,
+		Tags:      msg.Tags.String(),
+		Timestamp: msg.Timestamp.UTC().Format(logger.TimeFormat),
+	}
+
+	if msg.Level == logger.Fatal {
+		stacktrace, ok := msg.Data.([]byte)
+		if ok {
+			json.Data = string(stacktrace)
+		}
+	}
+
+	return jw.enc.Encode(json)
+}
+
+func (jw *jsonWriter) Close() error {
+	flushErr := jw.w.Flush()
+	err := jw.f.Close()
+	if err == nil {
+		err = flushErr
+	}
+	return err
+}
+
+func newJSONWriter() jsonWriter {
+	f, err := os.OpenFile("./tmp.log.json", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	w := bufio.NewWriter(f)
+	return jsonWriter{f, w, json.NewEncoder(w)}
 }
