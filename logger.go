@@ -122,7 +122,8 @@ func (l *Logger) Message(msg Msg) {
 	l.logs <- msg
 }
 
-// Set the minimum log level to log.
+// Set the minimum log level to log. See the order of the log level at the
+// LogLevel constants documentation.
 //
 // Note: NOT THREAT SAFE.
 func (l *Logger) SetMinLogLevel(min LogLevel) {
