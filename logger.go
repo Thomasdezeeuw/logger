@@ -2,10 +2,13 @@
 //
 // Licensed onder the MIT license that can be found in the LICENSE file.
 
-// Package logger provides multiple ways to log information of different levels
-// of importance. No default logger is created, but Get is provided to get any
-// logger at any location. See the provided examples, both in the documentation
-// and the _examples directory (for complete examples).
+// Package logger is a asynchronous logging package, hence the name logger. It
+// is build for customisation and speed. It uses a custom log writer so any
+// custom backend can be used to store the logs. Logger provides multiple ways
+// to log information of different levels of importance. No default logger is
+// created, but Get is provided to get any logger from any location. See the
+// provided examples, both in the documentation and the _examples directory
+// (for complete examples).
 package logger
 
 import (
