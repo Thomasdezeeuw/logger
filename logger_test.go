@@ -158,7 +158,7 @@ func TestNewConsole(t *testing.T) {
 
 func TestNewWriter(t *testing.T) {
 	t.Parallel()
-	const logName = "TestNewWriterTruncated"
+	const logName = "TestNewWriter"
 
 	var buf bytes.Buffer
 
@@ -350,7 +350,7 @@ func checkMessages(t1 time.Time, mw *msgWriter, minLevel LogLevel) error {
 			bytes, ok := got.Data.([]byte)
 			if !ok {
 				return fmt.Errorf("Expected message %d to have a stack trace, but it "+
-					"didn't, got: %v", got.Data)
+					"didn't, got: %v", i, got.Data)
 			} else if len(bytes) < 10 {
 				return fmt.Errorf("The expected stacktrace seems empty, got: %s",
 					string(bytes))

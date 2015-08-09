@@ -6,6 +6,7 @@ package logger
 
 import "time"
 
+// TimeFormat is used in Msg.String() to format the timestamp.
 const TimeFormat = "2006-01-02 15:04:05"
 
 // Msg is a message created by a log operation. The timezone of timestamp is
@@ -33,8 +34,7 @@ func (msg *Msg) String() string {
 	m += msg.Tags.String() + ": "
 	m += msg.Msg
 	if msg.Data != nil {
-		data := interfaceToString(msg.Data)
-		m += ", " + data
+		m += ", " + interfaceToString(msg.Data)
 	}
 	return m
 }

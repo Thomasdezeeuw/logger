@@ -57,12 +57,12 @@ func TestNewLogLevel(t *testing.T) {
 
 		got, ok := recv.(string)
 		if !ok {
-			t.Fatal("Expected the recoverd panic to be a string, but it's %v", recv)
+			t.Fatalf("Expected the recoverd panic to be a string, but it's %v", recv)
 		}
 
 		expected := "ini: can't have more then 255 log levels"
 		if got != expected {
-			t.Fatal("Expected the recoverd panic to be %s, but got %s", expected, got)
+			t.Fatalf("Expected the recoverd panic to be %s, but got %s", expected, got)
 		}
 	}()
 
