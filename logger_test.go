@@ -7,6 +7,7 @@ package logger
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -26,7 +27,7 @@ func init() {
 	}
 
 	expectedMsgs[7].Msg = "Function myFunction called by github.com/" +
-		"Thomasdezeeuw/logger.sendMessages, from file " + filePath + " on line 308"
+		"Thomasdezeeuw/logger.sendMessages, from file " + filePath + " on line 329"
 }
 
 // todo: test combine with different log levels.
@@ -201,6 +202,26 @@ func TestNewFile(t *testing.T) {
 	}
 
 	if err := checkMessagesString(t1, string(bytes), Debug); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestNewJSON(t *testing.T) {
+	t.Parallel()
+	const logName = "TestNewJSON"
+
+	var buf bytes.Buffer
+	log, err := NewJSON(logName, &buf)
+	if err != nil {
+		t.Fatal("Unexpected error creating a new logger: " + err.Error())
+	}
+
+	t1 := sendMessages(log)
+	if err := log.Close(); err != nil {
+		t.Fatal("Unexpected error closing the logger: " + err.Error())
+	}
+
+	if err := checkMessagesJSON(t1, buf.String(), Debug); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -416,6 +437,65 @@ func checkMessagesString(t1 time.Time, gotString string, minLevel LogLevel) erro
 
 	if i != len(msgs) {
 		return fmt.Errorf("Expected %d log messages, but got %d", len(msgs), i)
+	}
+
+	return nil
+}
+
+func checkMessagesJSON(t1 time.Time, gotString string, minLevel LogLevel) error {
+	// Get the message we can expect.
+	if minLevel > Fatal {
+		minLevel += 2 // We send 3 fatal messages.
+	}
+	var msgs = make([]Msg, len(expectedMsgs)-int(minLevel))
+	copy(msgs, expectedMsgs[int(minLevel):])
+
+	r := strings.NewReader(gotString)
+	dec := json.NewDecoder(r)
+	t1 = t1.Truncate(time.Second).UTC()
+
+	var i int
+	for ; dec.More(); i++ {
+		var got Msg
+		if err := dec.Decode(&got); err != nil {
+			return fmt.Errorf("Unexpected json decoding error: %s", err.Error())
+		}
+		expected := msgs[i]
+
+		// Add our timestamp to the expected message and truncate the time of the
+		// actual message, because 1 second is accurate enough.
+		expected.Timestamp = t1
+		got.Timestamp = got.Timestamp.Truncate(time.Second)
+
+		if expected.Level == Fatal {
+			// Originally the stack trace was a byte slice, but after marshalling and
+			// unmarshalling it becomes a string (just like any other Data).
+			str, ok := got.Data.(string)
+			if !ok {
+				return fmt.Errorf("Expected message %d to have a stack trace, but it "+
+					"didn't, got: %v", i, got.Data)
+			} else if len(str) < 10 {
+				return fmt.Errorf("The expected stacktrace seems empty, got: %s", str)
+			}
+
+			// Can't compare the strack trace any better.
+			got.Data = nil
+		} else {
+			// Can't marshal and unmarshal to the correct type, so the equal will
+			// never be correct.
+			expected.Data = nil
+			got.Data = nil
+		}
+
+		if !reflect.DeepEqual(got, expected) {
+			return fmt.Errorf("Expected message %d to be %v, but got %v",
+				i, expected, got)
+		}
+	}
+
+	if i != len(msgs) {
+		return fmt.Errorf("Expected to get %d messages, but got %d messages",
+			len(msgs), i)
 	}
 
 	return nil

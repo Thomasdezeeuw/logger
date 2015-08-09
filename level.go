@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"errors"
 	"fmt"
 	"math"
 )
@@ -38,6 +39,32 @@ func (lvl LogLevel) String() string {
 // Bytes does the same as LogLevel.String, but returns a byte slice.
 func (lvl LogLevel) Bytes() []byte {
 	return []byte(lvl.String())
+}
+
+// UnmarshalJSON provides a way to covert a string Log level to a LogLevel type.
+//
+// Note: custom log levels must be created first (with NewLogLevel), before
+// they can be unmarshalled.
+func (lvl *LogLevel) UnmarshalJSON(b []byte) error {
+	l := len(logLevelIndices) - 1
+	name := string(b)
+	if len(name) >= 2 {
+		// Drop the qoutes aroung the loglevels name.
+		name = name[1 : len(name)-1]
+	}
+
+	for i, start := range logLevelIndices {
+		if i == l {
+			break
+		}
+
+		if end := logLevelIndices[i+1]; logLevelNames[start:end] == name {
+			*lvl = LogLevel(i)
+			return nil
+		}
+	}
+
+	return errors.New("LogLevel not found")
 }
 
 // NewLogLevel creates a new fully supported custom log level for used in

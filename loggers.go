@@ -81,3 +81,24 @@ func NewConsole(name string) (*Logger, error) {
 	return NewWriter(name, stderr)
 }
 
+type jsonWriterMsgWriter struct {
+	enc *json.Encoder
+	bw  *bufio.Writer
+}
+
+func (jw *jsonWriterMsgWriter) Write(msg Msg) error {
+	return jw.enc.Encode(msg)
+}
+
+func (jw *jsonWriterMsgWriter) Close() error {
+	return jw.bw.Flush()
+}
+
+// NewJSON creates a new logger that writes logs in a JSON format to the given
+// io.Writer.
+func NewJSON(name string, w io.Writer) (*Logger, error) {
+	bw := bufio.NewWriter(w)
+	enc := json.NewEncoder(bw)
+	mw := &jsonWriterMsgWriter{enc, bw}
+	return New(name, mw)
+}

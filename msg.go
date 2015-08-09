@@ -4,7 +4,10 @@
 
 package logger
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 // TimeFormat is used in Msg.String() to format the timestamp.
 const TimeFormat = "2006-01-02 15:04:05"
@@ -42,4 +45,21 @@ func (msg *Msg) String() string {
 // Bytes does the same as Tags.String, but returns a byte slice.
 func (msg *Msg) Bytes() []byte {
 	return []byte(msg.String())
+}
+
+// MarshalJSON coverts the msg to a JSON formatted byte slice.
+func (msg Msg) MarshalJSON() ([]byte, error) {
+	m := `{"level": "` + msg.Level.String() + `", `
+	m += `"timestamp": "` + msg.Timestamp.UTC().Format(time.RFC3339Nano) + `", `
+	m += `"tags": [`
+	for _, tag := range msg.Tags {
+		m += `"` + tag + `", `
+	}
+	m = m[:len(m)-2] + `], `
+	m += `"msg": "` + msg.Msg + `"`
+	if msg.Data != nil {
+		m += fmt.Sprintf(`, "data": %q`, interfaceToString(msg.Data))
+	}
+	m += "}"
+	return []byte(m), nil
 }
