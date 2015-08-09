@@ -450,14 +450,14 @@ func checkMessagesJSON(t1 time.Time, gotString string, minLevel LogLevel) error 
 	var msgs = make([]Msg, len(expectedMsgs)-int(minLevel))
 	copy(msgs, expectedMsgs[int(minLevel):])
 
-	r := strings.NewReader(gotString)
-	dec := json.NewDecoder(r)
 	t1 = t1.Truncate(time.Second).UTC()
 
-	var i int
-	for ; dec.More(); i++ {
+	i := 0
+	s := bufio.NewScanner(strings.NewReader(gotString))
+
+	for s.Scan() {
 		var got Msg
-		if err := dec.Decode(&got); err != nil {
+		if err := json.Unmarshal(s.Bytes(), &got); err != nil {
 			return fmt.Errorf("Unexpected json decoding error: %s", err.Error())
 		}
 		expected := msgs[i]
@@ -491,6 +491,12 @@ func checkMessagesJSON(t1 time.Time, gotString string, minLevel LogLevel) error 
 			return fmt.Errorf("Expected message %d to be %v, but got %v",
 				i, expected, got)
 		}
+
+		i++
+	}
+
+	if err := s.Err(); err != nil {
+		return fmt.Errorf("Unexpected scanning error: %s", err.Error())
 	}
 
 	if i != len(msgs) {
