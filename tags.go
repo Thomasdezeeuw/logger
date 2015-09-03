@@ -22,20 +22,20 @@ func (tags Tags) String() string {
 
 // Bytes does the same as Tags.String, but returns a byte slice.
 func (tags Tags) Bytes() []byte {
-	var buf []byte
+	if len(tags) == 0 {
+		return []byte{}
+	}
 
-	// Add each tag in the form of "tag, "
+	// Add each tag in the form of "tag, ".
+	var buf []byte
 	for _, tag := range tags {
 		buf = append(buf, tag...)
 		buf = append(buf, ',')
 		buf = append(buf, ' ')
 	}
 
-	// Drop the last ", "
-	if len(buf) > 2 {
-		buf = buf[:len(buf)-2]
-	}
-
+	// Drop the last ", ".
+	buf = buf[:len(buf)-2]
 	return buf
 }
 
