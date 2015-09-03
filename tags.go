@@ -4,7 +4,7 @@
 
 package logger
 
-import "fmt"
+import "strconv"
 
 // Tags are keywords usefull in searching through logs, for example:
 //
@@ -44,10 +44,16 @@ func (tags Tags) MarshalJSON() ([]byte, error) {
 		return []byte("[]"), nil
 	}
 
-	str := "["
+	// Add each tag in the form of `"tag", `
+	buf := []byte("[")
 	for _, tag := range tags {
-		str += fmt.Sprintf("%q, ", tag)
+		qoutedTag := strconv.Quote(tag)
+		buf = append(buf, qoutedTag...)
+		buf = append(buf, ',')
+		buf = append(buf, ' ')
 	}
-	str = str[:len(str)-2] + "]"
-	return []byte(str), nil
+
+	// Drop the last "," and a closing bracket.
+	buf = append(buf[:len(buf)-2], ']')
+	return buf, nil
 }
