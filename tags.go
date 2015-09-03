@@ -4,6 +4,8 @@
 
 package logger
 
+import "fmt"
+
 // Tags are keywords usefull in searching through logs, for example:
 //
 //	tags := []Tags{"file.go", "myFn", "user:$user_id", "input:$input"}
@@ -35,4 +37,17 @@ func (tags Tags) Bytes() []byte {
 	}
 
 	return buf
+}
+
+func (tags Tags) MarshalJSON() ([]byte, error) {
+	if len(tags) == 0 {
+		return []byte("[]"), nil
+	}
+
+	str := "["
+	for _, tag := range tags {
+		str += fmt.Sprintf("%q, ", tag)
+	}
+	str = str[:len(str)-2] + "]"
+	return []byte(str), nil
 }
