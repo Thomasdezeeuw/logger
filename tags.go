@@ -14,16 +14,16 @@ package logger
 type Tags []string
 
 // String creates a comma separated list from the tags in string.
-func (tags *Tags) String() string {
+func (tags Tags) String() string {
 	return string(tags.Bytes())
 }
 
 // Bytes does the same as Tags.String, but returns a byte slice.
-func (tags *Tags) Bytes() []byte {
+func (tags Tags) Bytes() []byte {
 	var buf []byte
 
 	// Add each tag in the form of "tag, "
-	for _, tag := range *tags {
+	for _, tag := range tags {
 		buf = append(buf, tag...)
 		buf = append(buf, ',')
 		buf = append(buf, ' ')
