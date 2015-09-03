@@ -23,18 +23,18 @@ func TestTags(t *testing.T) {
 	for _, test := range tagTests {
 		got, gotBytes := test.tags.String(), string(test.tags.Bytes())
 		if gotBytes != test.expected {
-			t.Errorf("Expected Tags{%s}.Bytes() to return %q, but got %q",
-				test.tags.String(), test.expected, gotBytes)
+			t.Errorf("Expected %#v.Bytes() to return %q, but got %q",
+				test.tags, test.expected, gotBytes)
 		} else if got != test.expected {
-			t.Errorf("Expected Tags{%s}.String() to return %q, but got %q",
-				test.tags.String(), test.expected, got)
+			t.Errorf("Expected %#v.String() to return %q, but got %q",
+				test.tags, test.expected, got)
 		}
 
 		if json, err := test.tags.MarshalJSON(); err != nil {
 			t.Errorf("Unexpected error marshaling %v into json: %s", test.tags, err.Error())
 		} else if got := string(json); got != test.expectedJSON {
-			t.Errorf("Expected Tags{%s}.MarshalJSON() to return %q, but got %q",
-				test.tags.String(), test.expectedJSON, got)
+			t.Errorf("Expected %#v.MarshalJSON() to return %q, but got %q",
+				test.tags, test.expectedJSON, got)
 		}
 	}
 }
