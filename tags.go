@@ -4,12 +4,12 @@
 
 package logger
 
-// Tags are keywords usefull in searching the logs, for example:
+// Tags are keywords usefull in searching through logs, for example:
 //
-//	tags := []Tags{"file.go", "myFn", "user:$id", "input:$input"}
+//	tags := []Tags{"file.go", "myFn", "user:$user_id", "input:$input"}
 //
 // With this information you can lookup any logs for a specific user reporting
-// problems. Then you can find which function, in which file, is throwing the
+// a problem. Then you can find which function, in which file, is throwing the
 // error.
 type Tags []string
 
