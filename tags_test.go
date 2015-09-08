@@ -18,6 +18,7 @@ func TestTags(t *testing.T) {
 		{Tags{"tag1"}, "tag1", `["tag1"]`},
 		{Tags{"tag1", "tag2"}, "tag1, tag2", `["tag1", "tag2"]`},
 		{Tags{"tag1", "tag2", "tag3"}, "tag1, tag2, tag3", `["tag1", "tag2", "tag3"]`},
+		{Tags{`tag"1"`}, `tag"1"`, `["tag\"1\""]`},
 	}
 
 	for _, test := range tagTests {
