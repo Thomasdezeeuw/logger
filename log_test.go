@@ -175,8 +175,7 @@ func TestStartTwice(t *testing.T) {
 		}
 
 		const expected = "logger: can only Start once"
-		got := interfaceToString(recv)
-		if expected != got {
+		if got := interfaceToString(recv); expected != got {
 			t.Fatalf("Expected to panic with %q, but paniced with %q", expected, got)
 		}
 	}()
@@ -192,8 +191,7 @@ func TestStartNoEventWriter(t *testing.T) {
 		}
 
 		const expected = "logger: need atleast a single EventWriter to write to"
-		got := interfaceToString(recv)
-		if expected != got {
+		if got := interfaceToString(recv); expected != got {
 			t.Fatalf("Expected to panic with %q, but paniced with %q", expected, got)
 		}
 	}()
@@ -296,7 +294,7 @@ func testThumstone(tags Tags) {
 }
 
 func reset() {
-	eventChannel = make(chan Event, 1)
+	eventChannel = make(chan Event, defaultEventChannelSize)
 	eventChannelClosed = make(chan struct{}, 1)
 	eventWriters = []EventWriter{}
 	started = false
