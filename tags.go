@@ -11,7 +11,7 @@ import "strconv"
 //	tags := []Tags{"file.go", "myFn", "user:$user_id", "input:$input"}
 //
 // With this information you can lookup any logs for a specific user reporting
-// a problem. Then you can find which function, in which file, is throwing the
+// an issue. Then you can find which function, in which file, is throwing the
 // error.
 type Tags []string
 
@@ -39,6 +39,7 @@ func (tags Tags) Bytes() []byte {
 	return buf
 }
 
+// MarshalJSON returns an JSON formatted string slice (or array).
 func (tags Tags) MarshalJSON() ([]byte, error) {
 	if len(tags) == 0 {
 		return []byte("[]"), nil
