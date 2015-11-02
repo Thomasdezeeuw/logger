@@ -6,6 +6,7 @@ package logger
 
 import "testing"
 
+// go test -run none -bench . -benchmem -benchtime 10s
 
 var (
 	benchmarkResultTagString string
@@ -14,7 +15,6 @@ var (
 )
 
 func BenchmarkTags_String(b *testing.B) {
-	b.ReportAllocs()
 	var str string
 	for n := 0; n < b.N; n++ {
 		str = Tags{"hi", "world"}.String()
@@ -23,7 +23,6 @@ func BenchmarkTags_String(b *testing.B) {
 }
 
 func BenchmarkTags_Bytes(b *testing.B) {
-	b.ReportAllocs()
 	var bb []byte
 	for n := 0; n < b.N; n++ {
 		bb = Tags{"hi", "world"}.Bytes()
@@ -32,7 +31,6 @@ func BenchmarkTags_Bytes(b *testing.B) {
 }
 
 func BenchmarkTags_MarshalJSON(b *testing.B) {
-	b.ReportAllocs()
 	var json []byte
 	for n := 0; n < b.N; n++ {
 		json, _ = Tags{"hi", "world"}.MarshalJSON()
