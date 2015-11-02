@@ -5,6 +5,7 @@
 package logger
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"reflect"
@@ -140,8 +141,13 @@ func TestLog(t *testing.T) {
 					i, expected, got)
 			}
 
-			// todo: test if we get a stacktrace with calling Fatal.
 			if expectedEvent.Type == FatalEvent {
+				// sortof test the stacktrace, best we can do.
+				stacktrace := event.Data.([]byte)
+				if !bytes.HasPrefix(stacktrace, []byte("goroutine")) {
+					t.Errorf("Expected a stacktrace as data for a Fatal event, but got %s ",
+						string(stacktrace))
+				}
 				event.Data = nil
 			}
 
