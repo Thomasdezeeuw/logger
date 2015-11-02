@@ -4,8 +4,6 @@
 
 package logger
 
-// todo: benchmark Event, EventType, Tags.String/Bytes with reference and not.
-
 import (
 	"fmt"
 	"math"

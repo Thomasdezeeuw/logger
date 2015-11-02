@@ -6,7 +6,6 @@ package logger
 
 import "testing"
 
-// todo: benchmark with different size tags: 0, 1, 2, 3, 5, 10 (20?).
 
 var (
 	benchmarkResultTagString string

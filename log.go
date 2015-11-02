@@ -65,8 +65,6 @@ var ErrBadEventWriter = errors.New("EventWriter is bad, more then 5 faulty write
 
 // Needs to be run in it's own goroutine, it blocks until eventChannel is
 // closed. After eventChannel is closed it sends a signal to eventChannelClosed.
-// todo: benchmark and improve performance. Perhaps by passing the event writers
-// and event channels as reference to this function.
 func eventsWriter() {
 	// Create a copy of the eventWriters which we can modify. This way we can
 	// drop writers from the slice if they return too many write errors.

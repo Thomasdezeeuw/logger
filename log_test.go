@@ -284,11 +284,6 @@ func TestErrorEventWriter(t *testing.T) {
 	}
 }
 
-// todo: test with flaky writter, return nil, error, nil, error etc.
-// todo: test with both good and bad Writer
-// todo: test Thumbstone called from main, create a new sub proces and calling
-// it and log to the stdout. Then parse the event and check it.
-
 func testThumstone(tags Tags) {
 	Thumbstone(tags, "testThumstone")
 }
