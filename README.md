@@ -3,9 +3,10 @@
 [![GoDoc](https://godoc.org/github.com/Thomasdezeeuw/logger?status.svg)](https://godoc.org/github.com/Thomasdezeeuw/logger)
 [![Build Status](https://travis-ci.org/Thomasdezeeuw/logger.png?branch=master)](https://travis-ci.org/Thomasdezeeuw/logger)
 
-Logger is a asynchronous logging package for [Go](https://golang.org/). It is
-build for customisation and speed. It uses a custom log writer so any custom
-backend can be used to store the logs.
+Package logger provides asynchronous logging for [Go](https://golang.org/). It
+is build for customisation and speed. It uses a custom EventWriter so any custom
+backend can be used to store the logs. Logger provides multiple ways to log
+information with different levels of importance.
 
 ## Installation
 
@@ -17,41 +18,29 @@ $ go get github.com/Thomasdezeeuw/logger
 
 ## Usage
 
-You can create a logger once and retrieve it everywhere in each pacakge to log
-items.
+The code says it all.
 
 ```go
 package main
 
 import "github.com/Thomasdezeeuw/logger"
 
-const logName = "App"
-
-func init() {
-	// Setup a new logger with a name and log to the console.
-	log, err := logger.NewConsole(logName)
-	if err != nil {
-		panic(err)
-	}
-
-	log.Info(logger.Tags{"init", "logger"}, "created a logger in init function")
-}
-
 func main() {
-	// Get a logger by its name.
-	log, err := logger.Get(logName)
-	if err != nil {
-		panic(err)
-	}
-
 	// IMPORTANT! Otherwise not all logs will be written!
-	defer log.Close()
+	defer logger.Close()
+
+	ew := logger.NewConsoleEventWriter()
+	logger.Start(ew)
 
 	user := "Thomas"
 	userId := "1"
 	tags := logger.Tags{"README.md", "main", "user:" + userId}
-	log.Info(tags, "Hi %s!", user)
-	log.Warn(logger.Tags{"main"}, "We need make this application functional")
+	logger.Infof(tags, "Hi %s!", user)
+	logger.Warn(logger.Tags{"main"}, "We need make this application functional")
+
+	// Output:
+	//2015-11-02 21:38:12 [Info] README.md, main, user:1: Hi Thomas!
+	//2015-11-02 21:38:12 [Warn] main: We need make this application functional
 }
 ```
 
