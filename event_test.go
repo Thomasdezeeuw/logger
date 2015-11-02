@@ -30,30 +30,30 @@ func TestEvent(t *testing.T) {
 		expected     string
 		expectedJSON string
 	}{
-		{Event{FatalEvent, now, Tags{}, "Message1", nil},
-			tStr + " [Fatal] : Message1",
-			`{"type": "Fatal", "timestamp": "` + tStrNano + `", "tags": [], ` +
-				`"message": "Message1"}`},
-		{Event{ErrorEvent, now, Tags{"tag1"}, "Message2", "data"},
-			tStr + " [Error] tag1: Message2, data",
-			`{"type": "Error", "timestamp": "` + tStrNano + `", "tags": ["tag1"], ` +
-				`"message": "Message2", "data": "data"}`},
-		{Event{WarnEvent, now, Tags{"tag1"}, "Message3", &stringer{}},
-			tStr + " [Warn] tag1: Message3, data",
-			`{"type": "Warn", "timestamp": "` + tStrNano + `", "tags": ["tag1"], ` +
-				`"message": "Message3", "data": "data"}`},
-		{Event{InfoEvent, now, Tags{"tag1", "tag2"}, "Message4", []byte("data")},
-			tStr + " [Info] tag1, tag2: Message4, data",
-			`{"type": "Info", "timestamp": "` + tStrNano + `", "tags": ["tag1", "tag2"], ` +
-				`"message": "Message4", "data": "data"}`},
-		{Event{ThumbEvent, now, Tags{"tag1", "tag2", "tag3"}, "Message5", errors.New("error data")},
-			tStr + " [Thumb] tag1, tag2, tag3: Message5, error data",
-			`{"type": "Thumb", "timestamp": "` + tStrNano + `", "tags": ["tag1", "tag2", "tag3"], ` +
-				`"message": "Message5", "data": "error data"}`},
 		{Event{DebugEvent, now, Tags{"tag1", "tag2", "tag3"}, "Message6", 0},
 			tStr + " [Debug] tag1, tag2, tag3: Message6, 0",
 			`{"type": "Debug", "timestamp": "` + tStrNano + `", "tags": ["tag1", "tag2", "tag3"], ` +
 				`"message": "Message6", "data": "0"}`},
+		{Event{InfoEvent, now, Tags{"tag1", "tag2"}, "Message4", []byte("data")},
+			tStr + " [Info] tag1, tag2: Message4, data",
+			`{"type": "Info", "timestamp": "` + tStrNano + `", "tags": ["tag1", "tag2"], ` +
+				`"message": "Message4", "data": "data"}`},
+		{Event{WarnEvent, now, Tags{"tag1"}, "Message3", &stringer{}},
+			tStr + " [Warn] tag1: Message3, data",
+			`{"type": "Warn", "timestamp": "` + tStrNano + `", "tags": ["tag1"], ` +
+				`"message": "Message3", "data": "data"}`},
+		{Event{ErrorEvent, now, Tags{"tag1"}, "Message2", "data"},
+			tStr + " [Error] tag1: Message2, data",
+			`{"type": "Error", "timestamp": "` + tStrNano + `", "tags": ["tag1"], ` +
+				`"message": "Message2", "data": "data"}`},
+		{Event{FatalEvent, now, Tags{}, "Message1", nil},
+			tStr + " [Fatal] : Message1",
+			`{"type": "Fatal", "timestamp": "` + tStrNano + `", "tags": [], ` +
+				`"message": "Message1"}`},
+		{Event{ThumbEvent, now, Tags{"tag1", "tag2", "tag3"}, "Message5", errors.New("error data")},
+			tStr + " [Thumb] tag1, tag2, tag3: Message5, error data",
+			`{"type": "Thumb", "timestamp": "` + tStrNano + `", "tags": ["tag1", "tag2", "tag3"], ` +
+				`"message": "Message5", "data": "error data"}`},
 		{Event{NewEventType("My-event-type"), now, Tags{"tag1"}, "Message7", nil},
 			tStr + " [My-event-type] tag1: Message7",
 			`{"type": "My-event-type", "timestamp": "` + tStrNano + `", "tags": ["tag1"], ` +
