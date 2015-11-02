@@ -124,7 +124,7 @@ func (eventType EventType) MarshalJSON() ([]byte, error) {
 // this function will panic.
 func NewEventType(name string) EventType {
 	if len(eventTypeIndices) >= math.MaxUint16 {
-		panic("ini: can't have more then 65535 log levels")
+		panic("logger: can't have more then 65535 EventTypes")
 	}
 
 	eventTypeNames += name

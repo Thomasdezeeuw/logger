@@ -150,7 +150,7 @@ func TestNewLogLevelLimit(t *testing.T) {
 			t.Fatalf("Expected the recoverd panic to be a string, but it's %v", recv)
 		}
 
-		expected := "ini: can't have more then 65535 log levels"
+		expected := "logger: can't have more then 65535 EventTypes"
 		if got != expected {
 			t.Fatalf("Expected the recoverd panic to be %s, but got %s", expected, got)
 		}
