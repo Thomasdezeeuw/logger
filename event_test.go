@@ -121,16 +121,25 @@ func TestEventType(t *testing.T) {
 	}
 }
 
+const maxCostumEventTypes = math.MaxUint16 - 7 // minus builtin event types.
+
+var (
+	oldEventTypeNames   = eventTypeNames
+	oldEventTypeIndices = eventTypeIndices
+)
+
+func resetEventTypes() {
+	eventTypeNames = oldEventTypeNames
+	eventTypeIndices = oldEventTypeIndices
+}
+
 func TestNewLogLevelLimit(t *testing.T) {
-	t.Skip("TestNewLogLevelLimit takes almost 6 seconds, far to long")
 	if testing.Short() {
 		t.Skip("Skipping TestNewLogLevelLimit in short mode")
 	}
-
 	defer resetEventTypes()
-	const max = math.MaxUint16 - 7 // minus builtin event types.
 
-	for i := 1; i <= max; i++ {
+	for i := 1; i <= maxCostumEventTypes; i++ {
 		expected := fmt.Sprintf("EventType-%d", i)
 		eventType := NewEventType(expected)
 		if got := eventType.String(); got != expected {
@@ -155,15 +164,6 @@ func TestNewLogLevelLimit(t *testing.T) {
 			t.Fatalf("Expected the recoverd panic to be %s, but got %s", expected, got)
 		}
 	}()
-	NewEventType(fmt.Sprintf("EventType-%d", max+1))
-}
 
-var (
-	oldEventTypeNames   = eventTypeNames
-	oldEventTypeIndices = eventTypeIndices
-)
-
-func resetEventTypes() {
-	eventTypeNames = oldEventTypeNames
-	eventTypeIndices = oldEventTypeIndices
+	NewEventType(fmt.Sprintf("EventType-%d", maxCostumEventTypes+1))
 }
