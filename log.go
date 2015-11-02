@@ -17,22 +17,24 @@ const (
 )
 
 // EventWriter is the backend of the logger package. It takes events and writes
-// them to a backend, this can for example be a file, a database or the console.
+// them to a storage, this can for example be a file, a database or the
+// terminal.
 type EventWriter interface {
-	// todo: improve this doc.
 	// Write is called every time a Log operation is called. This call should
-	// block until the event is written, but advised is to buffer the events.
-	// If an error is returned the event is expected to NOT have been written and
-	// the event will be tried to written later on. If the EventWriter returns
-	// more then 5 errors in a row we stop writing to it. Because of this it is
-	// possible for the event to not be in order if it failed to be written the
-	// first time.
+	// block until the event is written. Advised is to buffer the events. All
+	// calls to Write are synchronous.
+	//
+	// If an error is returned the event is expected to NOT have been written. The
+	// event will written again after HandleError is called. If the EventWriter
+	// returns 5 errors in a row the EventWriter is consided to be bad and will be
+	// removed from the list of event writers. HandlerError will be called with
+	// ErrBadEventWriter if this happens.
 	Write(Event) error
 
 	// HandleError is called every time Write returns an error.
 	HandleError(error)
 
-	// Close is called on the EventWriter once Close() is called.
+	// Close is called on the EventWriter once Close() (on the package) is called.
 	Close() error
 }
 
@@ -43,7 +45,8 @@ var (
 	started            bool
 )
 
-// todo: doc.
+// Start starts the logger package and enables writing to the given
+// EventWriters.
 func Start(ews ...EventWriter) {
 	if started {
 		panic("logger: can only Start once")
@@ -68,7 +71,7 @@ var badEventWriterErr = errors.New("EventWriter is bad, more then 5 faulty write
 // and event channels as reference to this function.
 func eventsWriter() {
 	// Create a copy of the eventWriters which we can modify. This way we can
-	// drop writers from the slice if they return to many write errors.
+	// drop writers from the slice if they return too many write errors.
 	var ews = make([]EventWriter, len(eventWriters))
 	if n := copy(ews, eventWriters); n != len(eventWriters) {
 		panic("Couldn't copy all the EventWriters")
@@ -109,10 +112,10 @@ func eventsWriter() {
 	eventChannelClosed <- struct{}{}
 }
 
-// Close stops all the Log Operation from being usable (and they will panic if
-// used after close is called). It also closes all EventWriters and returns the
-// errors. The EventWriters are closed in the order they are added and the first
-// non-nil error is returned.
+// Close stops all the Log Operations from being usable, and they will panic if
+// used after close is called. It also closes all EventWriters and returns the
+// first returned error. The EventWriters are closed in the order they are
+// passed to Start.
 func Close() error {
 	close(eventChannel)
 	<-eventChannelClosed
@@ -132,13 +135,12 @@ var now = func() time.Time {
 	return time.Now()
 }
 
-// Debug logs the lowest level of information, only usefull when debugging
-// the application. Only shows when Logger.ShowDebug is set to true, which
-// defaults to false.
+// Debug logs a debug message.
 func Debug(tags Tags, msg string) {
 	eventChannel <- Event{DebugEvent, now(), tags, msg, nil}
 }
 
+// Debugf is a formatted function of Debug.
 func Debugf(tags Tags, format string, v ...interface{}) {
 	Debug(tags, fmt.Sprintf(format, v...))
 }
@@ -148,6 +150,7 @@ func Info(tags Tags, msg string) {
 	eventChannel <- Event{InfoEvent, now(), tags, msg, nil}
 }
 
+// Infof is a formatted function of Info.
 func Infof(tags Tags, format string, v ...interface{}) {
 	Info(tags, fmt.Sprintf(format, v...))
 }
@@ -157,21 +160,23 @@ func Warn(tags Tags, msg string) {
 	eventChannel <- Event{WarnEvent, now(), tags, msg, nil}
 }
 
+// Warnf is a formatted function of Warn.
 func Warnf(tags Tags, format string, v ...interface{}) {
 	Warn(tags, fmt.Sprintf(format, v...))
 }
 
-// Error logs a recoverable error.
+// Error logs an error message.
 func Error(tags Tags, err error) {
 	eventChannel <- Event{ErrorEvent, now(), tags, err.Error(), nil}
 }
 
+// Errorf is a formatted function of Error.
 func Errorf(tags Tags, format string, v ...interface{}) {
 	Error(tags, fmt.Errorf(format, v...))
 }
 
 // Fatal logs a recovered error which could have killed the application. Fatal
-// adds a stack trace as Msg.Data to the Msg.
+// adds a stack trace (type []byte) as Event.Data.
 func Fatal(tags Tags, recv interface{}) {
 	stackTrace := make([]byte, defaultStackSize)
 	n := runtime.Stack(stackTrace, false)
@@ -204,14 +209,15 @@ func Thumbstone(tags Tags, functionName string) {
 	eventChannel <- Event{ThumbEvent, now(), tags, msg, nil}
 }
 
-// Log logs an event.
+// Log logs a custom created event.
 //
-// Note: the timestamp is always set by Log.
+// Note: the timestamp doesn't need to be set, because it will be set by Log.
 func Log(event Event) {
 	event.Timestamp = now()
 	eventChannel <- event
 }
 
+// interfaceToString converts a interface{} variable to a string.
 func interfaceToString(value interface{}) string {
 	switch v := value.(type) {
 	case string:
