@@ -257,7 +257,7 @@ func TestErrorEventWriter(t *testing.T) {
 	for i, got := range eew.errors {
 		var expected error
 		if i == 9 {
-			expected = badEventWriterErr
+			expected = ErrBadEventWriter
 		} else {
 			d := 1
 			switch i {

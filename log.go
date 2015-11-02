@@ -61,7 +61,7 @@ func Start(ews ...EventWriter) {
 	go eventsWriter()
 }
 
-var badEventWriterErr = errors.New("EventWriter is bad, more then 5 faulty writes, EventWriter will be dropped")
+var ErrBadEventWriter = errors.New("EventWriter is bad, more then 5 faulty writes, EventWriter will be dropped")
 
 // Needs to be run in it's own goroutine, it blocks until eventChannel is
 // closed. After eventChannel is closed it sends a signal to eventChannelClosed.
@@ -85,7 +85,7 @@ func eventsWriter() {
 				// After 5 bad writes we drop the EventWriter from the slice of
 				// EventWriters, aswell as badWrites.
 				if l == 5 {
-					eventWriter.HandleError(badEventWriterErr)
+					eventWriter.HandleError(ErrBadEventWriter)
 					ews = append(ews[:i], ews[i+1:]...)
 					badWrites = append(badWrites[:i], badWrites[i+1:]...)
 					continue
