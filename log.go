@@ -25,10 +25,10 @@ type EventWriter interface {
 	// calls to Write are synchronous.
 	//
 	// If an error is returned the event is expected to NOT have been written. The
-	// event will written again after HandleError is called. If the EventWriter
-	// returns 5 errors in a row the EventWriter is consided to be bad and will be
-	// removed from the list of event writers. HandlerError will be called with
-	// ErrBadEventWriter if this happens.
+	// event will written again after the error handler is called. If the
+	// EventWriter returns 5 errors in a row the EventWriter is consided to be bad
+	// and will be removed from the list of event writers. HandlerError will be
+	// called with ErrBadEventWriter if this happens.
 	Write(Event) error
 
 	// HandleError is called every time Write returns an error.

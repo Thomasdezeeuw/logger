@@ -120,7 +120,8 @@ func (eventType EventType) MarshalJSON() ([]byte, error) {
 // logging. This function makes sure that EventType.String and EventType.Bytes
 // always return the correct name.
 //
-// Note: THIS FUNCTION IS NOT THREAD SAFE, use it before starting to log.
+// Note: THIS FUNCTION IS NOT SAFE FOR CONCURRENT USE, use it before starting to
+// log.
 //
 // Note: The maximum number of custom log levels is 65528, if more are created
 // this function will panic.
