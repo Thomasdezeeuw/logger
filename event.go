@@ -17,9 +17,10 @@ import (
 // timestamp.
 const TimeFormat = "2006-01-02 15:04:05"
 
-// Event is created by a log operation. The timezone of timestamp is always the
-// current timezone, recommend is to log time in the UTC timezone, by calling
-// Event.Timestamp.UTC(), Event.String() does this by default.
+// Event is created by a log operation. The timezone of the timestamp is always
+// the current timezone, recommend is to log time in the UTC timezone, by
+// calling Event.Timestamp.UTC(), Event.String and Event.Bytes does this by
+// default.
 type Event struct {
 	Type      EventType
 	Timestamp time.Time
@@ -28,7 +29,7 @@ type Event struct {
 	Data      interface{}
 }
 
-// String formats an event in the  following format:
+// String formats an event in the following format:
 //	YYYY-MM-DD HH:MM:SS [TYPE] tag1, tag2: message, data
 //
 // Note: the timestamp is set to the UTC timezone.
@@ -70,10 +71,10 @@ func (event Event) MarshalJSON() ([]byte, error) {
 	return []byte(str), nil
 }
 
-// EventType indicent which level of detail a log operation has.
+// EventType indicates what type a log operation has.
 type EventType uint16
 
-// Log levels available by default.
+// EventTypes available by default.
 const (
 	DebugEvent EventType = iota
 	InfoEvent
@@ -83,6 +84,8 @@ const (
 	ThumbEvent
 )
 
+// Names and indices for use in EventType.String and Event.Bytes, can be
+// modified by NewEventType
 var (
 	eventTypeNames   = "DebugInfoWarnErrorFatalThumb"
 	eventTypeIndices = []int{0, 5, 9, 13, 18, 23, 28}
@@ -109,14 +112,15 @@ func (eventType EventType) Bytes() []byte {
 	return []byte(eventType.String())
 }
 
+// MarshalJSON returns a qouted string event type.
 func (eventType EventType) MarshalJSON() ([]byte, error) {
 	qoutedEventType := strconv.Quote(eventType.String())
 	return []byte(qoutedEventType), nil
 }
 
 // NewEventType creates a new fully supported custom EventType to be used in
-// logging. This function makes sure that EventType.String() and
-// EventType.Bytes() always return the correct name.
+// logging. This function makes sure that EventType.String and EventType.Bytes
+// always return the correct name.
 //
 // Note: THIS FUNCTION IS NOT THREAD SAFE, use it before starting to log.
 //
