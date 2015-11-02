@@ -7,7 +7,6 @@ package logger
 import (
 	"errors"
 	"fmt"
-	"os"
 	"reflect"
 	"runtime"
 	"testing"
@@ -18,10 +17,6 @@ import (
 var t1 = time.Date(2015, 9, 1, 14, 22, 36, 0, time.UTC)
 
 func init() {
-	if !testing.Short() {
-		os.Stderr.WriteString("Not running tests in short mode, this might take a while\n")
-	}
-
 	margin := time.Millisecond
 	t, t2 := now(), time.Now()
 	if !t.Truncate(margin).Equal(t2.Truncate(margin)) {
