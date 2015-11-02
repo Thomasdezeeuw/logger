@@ -39,8 +39,8 @@ type EventWriter interface {
 }
 
 var (
-	eventChannel       chan Event
-	eventChannelClosed chan struct{}
+	eventChannel       = make(chan Event, defaultEventChannelSize)
+	eventChannelClosed = make(chan struct{}, 1) // Can't block.
 	eventWriters       []EventWriter
 	started            bool
 )
@@ -57,8 +57,6 @@ func Start(ews ...EventWriter) {
 		panic("logger: need atleast a single EventWriter to write to")
 	}
 
-	eventChannel = make(chan Event, defaultEventChannelSize)
-	eventChannelClosed = make(chan struct{}, 1) // Can't block.
 	eventWriters = ews
 	go eventsWriter()
 }
