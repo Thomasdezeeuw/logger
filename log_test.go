@@ -30,12 +30,6 @@ func init() {
 	}
 }
 
-// A data type to be used in calling Log.
-type user struct {
-	ID   int
-	Name string
-}
-
 // EventWriter that collects the events and errors.
 type eventWriter struct {
 	events []Event
@@ -55,6 +49,12 @@ func (ew *eventWriter) HandleError(err error) {
 func (ew *eventWriter) Close() error {
 	ew.closed = true
 	return nil
+}
+
+// A data type to be used in calling Log.
+type user struct {
+	ID   int
+	Name string
 }
 
 func TestLog(t *testing.T) {
