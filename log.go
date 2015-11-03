@@ -58,54 +58,84 @@ func Start(ews ...EventWriter) {
 	}
 
 	eventWriters = ews
-	go eventsWriter()
+	go writeEvents()
 }
 
 var ErrBadEventWriter = fmt.Errorf("EventWriter is bad, more then %d faulty writes, EventWriter will be dropped", maxNWriteErrors)
 
 // Needs to be run in it's own goroutine, it blocks until eventChannel is
 // closed. After eventChannel is closed it sends a signal to eventChannelClosed.
-func eventsWriter() {
-	// Create a copy of the eventWriters which we can modify. This way we can
-	// drop writers from the slice if they return too many write errors.
-	var ews = make([]EventWriter, len(eventWriters))
-	if n := copy(ews, eventWriters); n != len(eventWriters) {
-		panic("Couldn't copy all the EventWriters")
+func writeEvents() {
+	l := len(eventWriters)
+
+	// Create sub channels for each EventWriter and start each EventWriter.
+	closeSubChannel := make(chan struct{}, l)
+	var eventSubChannels = make([]chan Event, l)
+	for i, ew := range eventWriters {
+		eventSubChannels[i] = make(chan Event, defaultEventChannelSize)
+		go startEventWriter(ew, eventSubChannels[i], closeSubChannel)
 	}
 
-	// Slice of event that tried to be written, but returned an error. This is a
-	// per EventWriter slice.
-	var badWrites = make([][]Event, len(eventWriters))
-
+	// Fanout the events to all the sub channels.
 	for event := range eventChannel {
-		for i, eventWriter := range ews {
-			if l := len(badWrites[i]); l != 0 {
-				// After 5 bad writes we drop the EventWriter from the slice of
-				// EventWriters, aswell as badWrites.
-				if l == maxNWriteErrors {
-					eventWriter.HandleError(ErrBadEventWriter)
-					ews = append(ews[:i], ews[i+1:]...)
-					badWrites = append(badWrites[:i], badWrites[i+1:]...)
-					continue
-				}
-
-				// Try to rewite a previously failed write.
-				if err := eventWriter.Write(badWrites[i][0]); err != nil {
-					eventWriter.HandleError(err)
-				} else {
-					badWrites[i] = badWrites[i][1:]
-				}
-			}
-
-			err := eventWriter.Write(event)
-			if err != nil {
-				eventWriter.HandleError(err)
-				badWrites[i] = append(badWrites[i], event)
-			}
+		for _, eventSubChannel := range eventSubChannels {
+			eventSubChannel <- event
 		}
 	}
 
+	// Close each sub channel and wait for their close signal.
+	for _, eventSubChannel := range eventSubChannels {
+		close(eventSubChannel)
+	}
+
+	// Wait for all the EventWriters to be closed.
+	for n := 0; n < l; n++ {
+		<-closeSubChannel
+	}
+
 	eventChannelClosed <- struct{}{}
+}
+
+// Must run in it's own go routine, it blocks until the events channel is
+// closed. After the events channels is closed it sends a signal to the closed
+// channel.
+func startEventWriter(ew EventWriter, events <-chan Event, closed chan<- struct{}) {
+	var badEventWriter = false
+
+	for event := range events {
+		if badEventWriter {
+			// Simply drain the channel.
+			// todo: improve this, don't send to the channel anymore if the writer is
+			// bad.
+			continue
+		}
+
+		if err := writeEvent(ew, event); err != nil {
+			// At this point the EventWriter is bad and we won't write to it anymore.
+			ew.HandleError(err)
+			badEventWriter = true
+		}
+	}
+
+	closed <- struct{}{}
+}
+
+// WriteEvent tries to write the event to the given EventWriter, it tries it up
+// to maxNWriteErrors times. If EventWriter.Write returns an error it gets
+// passed to the error handler of the EventWriter. This function either returns
+// ErrBadEventWriter or nil as an error.
+func writeEvent(ew EventWriter, event Event) error {
+	for n := 1; n <= maxNWriteErrors; n++ {
+		err := ew.Write(event)
+		if err == nil {
+			return nil
+		}
+
+		// Handle the error and try again.
+		ew.HandleError(err)
+	}
+
+	return ErrBadEventWriter
 }
 
 // Close stops all the Log Operations from being usable, and they will panic if

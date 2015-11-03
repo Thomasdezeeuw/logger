@@ -240,40 +240,21 @@ func TestErrorEventWriter(t *testing.T) {
 			closeError.Error(), err.Error())
 	}
 
-	// 10 = 5 bad write errors + 4 rewrite error of the first event + 1 bad
-	// EventWriter error.
-	if expected, got := 10, len(eew.errors); got != expected {
+	// 6 = 5 bad write errors + 1 bad EventWriter error.
+	if expected, got := 6, len(eew.errors); got != expected {
 		t.Fatalf("Expected %d errors, but only got %d", expected, got)
 	}
 
 	// Expected errors:
-	// 0 - write event 1
-	// 1 - rewrite event 1
-	// 2 - write event 2
-	// 3 - rewrite event 1
-	// 4 - write event 3
-	// 5 - rewrite event 1
-	// 6 - write event 4
-	// 7 - rewrite event 1
-	// 8 - write event 5
-	// 9 - EventWriter is bad, more then 5 faulty writes, EventWriter will be dropped
+	// 0 - 4: write event 1.
+	// 5:     EventWriter is bad.
 
 	for i, got := range eew.errors {
 		var expected error
-		if i == 9 {
+		if i == 5 {
 			expected = ErrBadEventWriter
 		} else {
 			d := 1
-			switch i {
-			case 2:
-				d = 2
-			case 4:
-				d = 3
-			case 6:
-				d = 4
-			case 8:
-				d = 5
-			}
 			expected = fmt.Errorf("Write error: Info message%d", d)
 		}
 
