@@ -61,7 +61,7 @@ func Start(ews ...EventWriter) {
 	go writeEvents()
 }
 
-var ErrBadEventWriter = fmt.Errorf("EventWriter is bad, more then %d faulty writes, EventWriter will be dropped", maxNWriteErrors)
+var ErrBadEventWriter = fmt.Errorf("EventWriter is bad, %d faulty writes, EventWriter will be dropped", maxNWriteErrors)
 
 // Needs to be run in it's own goroutine, it blocks until eventChannel is
 // closed. After eventChannel is closed it sends a signal to eventChannelClosed.
