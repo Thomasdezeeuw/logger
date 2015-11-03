@@ -7,6 +7,7 @@ package logger
 import (
 	"fmt"
 	"runtime"
+	"sync"
 	"time"
 )
 
@@ -65,14 +66,14 @@ var ErrBadEventWriter = fmt.Errorf("EventWriter is bad, more then %d faulty writ
 // Needs to be run in it's own goroutine, it blocks until eventChannel is
 // closed. After eventChannel is closed it sends a signal to eventChannelClosed.
 func writeEvents() {
-	l := len(eventWriters)
+	var wg sync.WaitGroup
+	wg.Add(len(eventWriters))
 
-	// Create sub channels for each EventWriter and start each EventWriter.
-	closeSubChannel := make(chan struct{}, l)
-	var eventSubChannels = make([]chan Event, l)
+	// Create event sub channels for each EventWriter and start each EventWriter.
+	var eventSubChannels = make([]chan Event, len(eventWriters))
 	for i, ew := range eventWriters {
 		eventSubChannels[i] = make(chan Event, defaultEventChannelSize)
-		go startEventWriter(ew, eventSubChannels[i], closeSubChannel)
+		go startEventWriter(ew, eventSubChannels[i], &wg)
 	}
 
 	// Fanout the events to all the sub channels.
@@ -87,18 +88,14 @@ func writeEvents() {
 		close(eventSubChannel)
 	}
 
-	// Wait for all the EventWriters to be closed.
-	for n := 0; n < l; n++ {
-		<-closeSubChannel
-	}
-
+	wg.Wait()
 	eventChannelClosed <- struct{}{}
 }
 
 // Must run in it's own go routine, it blocks until the events channel is
 // closed. After the events channels is closed it sends a signal to the closed
 // channel.
-func startEventWriter(ew EventWriter, events <-chan Event, closed chan<- struct{}) {
+func startEventWriter(ew EventWriter, events <-chan Event, wg *sync.WaitGroup) {
 	var badEventWriter = false
 
 	for event := range events {
@@ -116,7 +113,7 @@ func startEventWriter(ew EventWriter, events <-chan Event, closed chan<- struct{
 		}
 	}
 
-	closed <- struct{}{}
+	wg.Done()
 }
 
 // WriteEvent tries to write the event to the given EventWriter, it tries it up
