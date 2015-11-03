@@ -73,11 +73,7 @@ func writeEvents() {
 	var eventSubChannels = make([]chan Event, len(eventWriters))
 	for i, ew := range eventWriters {
 		eventSubChannels[i] = make(chan Event, defaultEventChannelSize)
-
-		go func(wg *sync.WaitGroup) {
-			startEventWriter(ew, eventSubChannels[i])
-			wg.Done()
-		}(&wg)
+		go startEventWriter(ew, eventSubChannels[i], &wg)
 	}
 
 	// Fan out the events to all the sub channels.
@@ -97,7 +93,7 @@ func writeEvents() {
 }
 
 // StartEventWriter blocks until the events channel is closed.
-func startEventWriter(ew EventWriter, events <-chan Event) {
+func startEventWriter(ew EventWriter, events <-chan Event, wg *sync.WaitGroup) {
 	var badEventWriter = false
 
 	for event := range events {
@@ -114,6 +110,8 @@ func startEventWriter(ew EventWriter, events <-chan Event) {
 			badEventWriter = true
 		}
 	}
+
+	wg.Done()
 }
 
 // WriteEvent tries to write the event to the given EventWriter, it tries it up
