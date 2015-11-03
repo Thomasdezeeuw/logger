@@ -50,14 +50,13 @@ var (
 func Start(ews ...EventWriter) {
 	if started {
 		panic("logger: can only Start once")
-	}
-	started = true
-
-	if len(ews) < 1 {
+	} else if len(ews) < 1 {
 		panic("logger: need atleast a single EventWriter to write to")
 	}
 
+	started = true
 	eventWriters = ews
+
 	go writeEvents()
 }
 
