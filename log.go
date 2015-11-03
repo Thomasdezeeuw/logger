@@ -5,7 +5,6 @@
 package logger
 
 import (
-	"errors"
 	"fmt"
 	"runtime"
 	"time"
@@ -14,6 +13,7 @@ import (
 const (
 	defaultStackSize        = 8192
 	defaultEventChannelSize = 1024
+	maxNWriteErrors         = 5
 )
 
 // EventWriter is the backend of the logger package. It takes events and writes
@@ -61,7 +61,7 @@ func Start(ews ...EventWriter) {
 	go eventsWriter()
 }
 
-var ErrBadEventWriter = errors.New("EventWriter is bad, more then 5 faulty writes, EventWriter will be dropped")
+var ErrBadEventWriter = fmt.Errorf("EventWriter is bad, more then %d faulty writes, EventWriter will be dropped", maxNWriteErrors)
 
 // Needs to be run in it's own goroutine, it blocks until eventChannel is
 // closed. After eventChannel is closed it sends a signal to eventChannelClosed.
@@ -82,7 +82,7 @@ func eventsWriter() {
 			if l := len(badWrites[i]); l != 0 {
 				// After 5 bad writes we drop the EventWriter from the slice of
 				// EventWriters, aswell as badWrites.
-				if l == 5 {
+				if l == maxNWriteErrors {
 					eventWriter.HandleError(ErrBadEventWriter)
 					ews = append(ews[:i], ews[i+1:]...)
 					badWrites = append(badWrites[:i], badWrites[i+1:]...)
