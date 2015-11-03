@@ -80,14 +80,14 @@ func writeEvents() {
 		}(&wg)
 	}
 
-	// Fanout the events to all the sub channels.
+	// Fan out the events to all the sub channels.
 	for event := range eventChannel {
 		for _, eventSubChannel := range eventSubChannels {
 			eventSubChannel <- event
 		}
 	}
 
-	// Close each sub channel and wait for their close signal.
+	// Close each sub channel.
 	for _, eventSubChannel := range eventSubChannels {
 		close(eventSubChannel)
 	}
@@ -96,9 +96,7 @@ func writeEvents() {
 	eventChannelClosed <- struct{}{}
 }
 
-// Must run in it's own go routine, it blocks until the events channel is
-// closed. After the events channels is closed it sends a signal to the closed
-// channel.
+// StartEventWriter blocks until the events channel is closed.
 func startEventWriter(ew EventWriter, events <-chan Event) {
 	var badEventWriter = false
 
