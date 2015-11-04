@@ -66,10 +66,11 @@ func TestLog(t *testing.T) {
 	eventType := NewEventType("my-event-type")
 	data := user{1, "Thomas"}
 	event := Event{
-		Type:    eventType,
-		Tags:    tags,
-		Message: "My event",
-		Data:    data,
+		Type:      eventType,
+		Timestamp: now(),
+		Tags:      tags,
+		Message:   "My event",
+		Data:      data,
 	}
 
 	Debug(tags, "Debug message")
@@ -99,17 +100,17 @@ func TestLog(t *testing.T) {
 		fn := runtime.FuncForPC(pc)
 
 		expected := []Event{
-			{Type: DebugEvent, Tags: tags, Message: "Debug message"},
-			{Type: DebugEvent, Tags: tags, Message: "Debug formatted message"},
-			{Type: InfoEvent, Tags: tags, Message: "Info message"},
-			{Type: InfoEvent, Tags: tags, Message: "Info formatted message"},
-			{Type: WarnEvent, Tags: tags, Message: "Warn message"},
-			{Type: WarnEvent, Tags: tags, Message: "Warn formatted message"},
-			{Type: ErrorEvent, Tags: tags, Message: "Error message"},
-			{Type: ErrorEvent, Tags: tags, Message: "Error formatted message"},
-			{Type: FatalEvent, Tags: tags, Message: "Fatal message"},
-			{Type: ThumbEvent, Tags: tags, Message: "Function testThumstone called by " +
-				fn.Name() + ", from file " + file + " on line 87"},
+			{Type: DebugEvent, Timestamp: now(), Tags: tags, Message: "Debug message"},
+			{Type: DebugEvent, Timestamp: now(), Tags: tags, Message: "Debug formatted message"},
+			{Type: InfoEvent, Timestamp: now(), Tags: tags, Message: "Info message"},
+			{Type: InfoEvent, Timestamp: now(), Tags: tags, Message: "Info formatted message"},
+			{Type: WarnEvent, Timestamp: now(), Tags: tags, Message: "Warn message"},
+			{Type: WarnEvent, Timestamp: now(), Tags: tags, Message: "Warn formatted message"},
+			{Type: ErrorEvent, Timestamp: now(), Tags: tags, Message: "Error message"},
+			{Type: ErrorEvent, Timestamp: now(), Tags: tags, Message: "Error formatted message"},
+			{Type: FatalEvent, Timestamp: now(), Tags: tags, Message: "Fatal message"},
+			{Type: ThumbEvent, Timestamp: now(), Tags: tags, Message: "Function testThumstone called by " +
+				fn.Name() + ", from file " + file + " on line 88"},
 			event,
 		}
 
@@ -121,26 +122,6 @@ func TestLog(t *testing.T) {
 		for i, event := range ew.events {
 			expectedEvent := expected[i]
 
-			if expected, got := expectedEvent.Type, event.Type; expected != got {
-				t.Errorf("Expected event #%d to have type %q, but got %q",
-					i, expected, got)
-			}
-
-			if expected, got := t1, event.Timestamp; !expected.Equal(got) {
-				t.Errorf("Expected event #%d to have timestamp %q, but got %q",
-					i, expected, got)
-			}
-
-			if expected, got := expectedEvent.Tags, event.Tags; !reflect.DeepEqual(expected, got) {
-				t.Errorf("Expected event #%d to have tags %q, but got %q",
-					i, expected, got)
-			}
-
-			if expected, got := expectedEvent.Message, event.Message; expected != got {
-				t.Errorf("Expected event #%d to have message %q, but got %q",
-					i, expected, got)
-			}
-
 			if expectedEvent.Type == FatalEvent {
 				// sortof test the stacktrace, best we can do.
 				stacktrace := event.Data.([]byte)
@@ -151,9 +132,8 @@ func TestLog(t *testing.T) {
 				event.Data = nil
 			}
 
-			if expected, got := expectedEvent.Data, event.Data; !reflect.DeepEqual(expected, got) {
-				t.Errorf("Expected event #%d to have data %v, but got %v",
-					i, expected, got)
+			if expected, got := expectedEvent, event; !reflect.DeepEqual(expected, got) {
+				t.Errorf("Expected event #%d to be %v, but got %v", i, expected, got)
 			}
 		}
 	}()
