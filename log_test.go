@@ -99,17 +99,17 @@ func TestLog(t *testing.T) {
 		fn := runtime.FuncForPC(pc)
 
 		expected := []Event{
-			Event{Type: DebugEvent, Tags: tags, Message: "Debug message"},
-			Event{Type: DebugEvent, Tags: tags, Message: "Debug formatted message"},
-			Event{Type: InfoEvent, Tags: tags, Message: "Info message"},
-			Event{Type: InfoEvent, Tags: tags, Message: "Info formatted message"},
-			Event{Type: WarnEvent, Tags: tags, Message: "Warn message"},
-			Event{Type: WarnEvent, Tags: tags, Message: "Warn formatted message"},
-			Event{Type: ErrorEvent, Tags: tags, Message: "Error message"},
-			Event{Type: ErrorEvent, Tags: tags, Message: "Error formatted message"},
-			Event{Type: FatalEvent, Tags: tags, Message: "Fatal message"},
-			Event{Type: ThumbEvent, Tags: tags, Message: "Function testThumstone called by " + fn.Name() + ", from file " + file +
-				" on line 87"},
+			{Type: DebugEvent, Tags: tags, Message: "Debug message"},
+			{Type: DebugEvent, Tags: tags, Message: "Debug formatted message"},
+			{Type: InfoEvent, Tags: tags, Message: "Info message"},
+			{Type: InfoEvent, Tags: tags, Message: "Info formatted message"},
+			{Type: WarnEvent, Tags: tags, Message: "Warn message"},
+			{Type: WarnEvent, Tags: tags, Message: "Warn formatted message"},
+			{Type: ErrorEvent, Tags: tags, Message: "Error message"},
+			{Type: ErrorEvent, Tags: tags, Message: "Error formatted message"},
+			{Type: FatalEvent, Tags: tags, Message: "Fatal message"},
+			{Type: ThumbEvent, Tags: tags, Message: "Function testThumstone called by " +
+				fn.Name() + ", from file " + file + " on line 87"},
 			event,
 		}
 
