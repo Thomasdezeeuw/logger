@@ -8,7 +8,7 @@ import "strconv"
 
 // Tags are keywords usefull in searching through logs, for example:
 //
-//	tags := []Tags{"file.go", "myFn", "user:$user_id", "input:$input"}
+//	tags := Tags{"file.go", "myFn", "user:$user_id", "input:$input"}
 //
 // With this information you can lookup any logs for a specific user reporting
 // an issue. Then you can find which function, in which file, is throwing the
