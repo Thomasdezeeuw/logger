@@ -17,11 +17,15 @@ const (
 )
 
 type fileEventWriter struct {
-	w *bufio.Writer
-	f *os.File
+	w       *bufio.Writer
+	f       *os.File
+	minType EventType
 }
 
 func (ew *fileEventWriter) Write(event Event) error {
+	if event.Type < ew.minType {
+		return nil
+	}
 	bytes := append(event.Bytes(), '\n')
 	_, err := ew.w.Write(bytes)
 	return err
@@ -43,21 +47,28 @@ func (ew *fileEventWriter) Close() error {
 }
 
 // NewFileEventWriter creates a EventWriter that writes to the given file.
-func NewFileEventWriter(path string) (EventWriter, error) {
+// MinType is the minimal EventType an event must have to be logged. For example
+// if minType is InfoEvent, then any events with an EventType of Debug will not
+// be logged.
+func NewFileEventWriter(path string, minType EventType) (EventWriter, error) {
 	f, err := os.OpenFile(path, defaultFileFlag, defaultFilePermission)
 	if err != nil {
 		return nil, err
 	}
 
-	return &fileEventWriter{bufio.NewWriter(f), f}, nil
+	return &fileEventWriter{bufio.NewWriter(f), f, minType}, nil
 }
 
 type consoleEventWriter struct {
-	w    io.Writer
-	errW io.Writer
+	w       io.Writer
+	errW    io.Writer
+	minType EventType
 }
 
 func (ew *consoleEventWriter) Write(event Event) error {
+	if event.Type < ew.minType {
+		return nil
+	}
 	bytes := append(event.Bytes(), '\n')
 	_, err := ew.w.Write(bytes)
 	return err
@@ -80,17 +91,23 @@ var (
 )
 
 // NewConsoleEventWriter creates a new EventWriter that writes to standard out
-// and standard error.
-func NewConsoleEventWriter() EventWriter {
-	return &consoleEventWriter{stdout, stderr}
+// and standard error. MinType is the minimal EventType an event must have to
+// be logged. For example if minType is InfoEvent, then any events with an
+// EventType of Debug will not be logged.
+func NewConsoleEventWriter(minType EventType) EventWriter {
+	return &consoleEventWriter{stdout, stderr, minType}
 }
 
 type jsonEventWriter struct {
 	enc          *json.Encoder
 	errorHandler func(error)
+	minType      EventType
 }
 
 func (ew *jsonEventWriter) Write(event Event) error {
+	if event.Type < ew.minType {
+		return nil
+	}
 	return ew.enc.Encode(event)
 }
 
@@ -103,7 +120,9 @@ func (ew *jsonEventWriter) Close() error {
 }
 
 // NewJSONEventWriter creates a new EventWriter that writes JSON to the given
-// writer.
-func NewJSONEventWriter(w io.Writer, errorHandler func(error)) EventWriter {
-	return &jsonEventWriter{json.NewEncoder(w), errorHandler}
+// writer. MinType is the minimal EventType an event must have to be logged. For
+// example if minType is InfoEvent, then any events with an EventType of Debug
+// will not be logged.
+func NewJSONEventWriter(w io.Writer, errorHandler func(error), minType EventType) EventWriter {
+	return &jsonEventWriter{json.NewEncoder(w), errorHandler, minType}
 }

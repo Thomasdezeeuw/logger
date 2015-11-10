@@ -19,17 +19,28 @@ func TestFileEventWriter(t *testing.T) {
 	file := strconv.FormatInt(time.Now().UnixNano(), 10)
 	path := filepath.Join(os.TempDir(), "logger_"+file+".log")
 
-	ew, err := NewFileEventWriter(path)
+	ew, err := NewFileEventWriter(path, InfoEvent)
 	if err != nil {
 		t.Fatal("Unexpected error creating new file event writer: " + err.Error())
 	}
 	defer os.Remove(path)
 
 	event := Event{
-		Type:      DebugEvent,
+		Type:      InfoEvent,
 		Timestamp: now(),
 		Tags:      Tags{"TestFileEventWriter"},
 		Message:   "Log message",
+	}
+
+	if err := ew.Write(event); err != nil {
+		t.Fatal("Unexpected error writing to FileEventWriter: " + err.Error())
+	}
+
+	event = Event{
+		Type:      DebugEvent,
+		Timestamp: now(),
+		Tags:      Tags{"TestFileEventWriter"},
+		Message:   "Never shows up",
 	}
 
 	if err := ew.Write(event); err != nil {
@@ -47,7 +58,7 @@ func TestFileEventWriter(t *testing.T) {
 		t.Fatal("Unexpected error reading file: " + err.Error())
 	}
 
-	expected := "2015-09-01 14:22:36 [Debug] TestFileEventWriter: Log message\n" +
+	expected := "2015-09-01 14:22:36 [Info] TestFileEventWriter: Log message\n" +
 		"2015-09-01 14:22:36 [Error] FileEventWriter: Error writing to file: writing error\n"
 
 	if got := string(bytes); got != expected {
@@ -58,17 +69,28 @@ func TestFileEventWriter(t *testing.T) {
 func TestConsoleEventWriter(t *testing.T) {
 	var buf bytes.Buffer
 	var errBuf bytes.Buffer
-	ew := NewConsoleEventWriter()
+	ew := NewConsoleEventWriter(InfoEvent)
 
 	cew := ew.(*consoleEventWriter)
 	cew.w = &buf
 	cew.errW = &errBuf
 
 	event := Event{
-		Type:      DebugEvent,
+		Type:      InfoEvent,
 		Timestamp: now(),
 		Tags:      Tags{"TestConsoleEventWriter"},
 		Message:   "Log message",
+	}
+
+	if err := ew.Write(event); err != nil {
+		t.Fatal("Unexpected error writing to ConsoleEventWriter: " + err.Error())
+	}
+
+	event = Event{
+		Type:      DebugEvent,
+		Timestamp: now(),
+		Tags:      Tags{"TestConsoleEventWriter"},
+		Message:   "Never gets written",
 	}
 
 	if err := ew.Write(event); err != nil {
@@ -86,7 +108,7 @@ func TestConsoleEventWriter(t *testing.T) {
 		t.Fatal("Unexpected error reading output buffer: " + err.Error())
 	}
 
-	expected := "2015-09-01 14:22:36 [Debug] TestConsoleEventWriter: Log message\n"
+	expected := "2015-09-01 14:22:36 [Info] TestConsoleEventWriter: Log message\n"
 
 	if got := string(bytes); got != expected {
 		t.Fatalf("Expected buffer to contain:\n%s\nBut got:\n%s", expected, got)
@@ -110,13 +132,24 @@ func TestJSONEventWriter(t *testing.T) {
 	errorHandler := func(err error) {
 		errBuf.WriteString(err.Error())
 	}
-	ew := NewJSONEventWriter(&buf, errorHandler)
+	ew := NewJSONEventWriter(&buf, errorHandler, InfoEvent)
 
 	event := Event{
-		Type:      DebugEvent,
+		Type:      InfoEvent,
 		Timestamp: now(),
 		Tags:      Tags{"TestJSONEventWriter"},
 		Message:   "Log message",
+	}
+
+	if err := ew.Write(event); err != nil {
+		t.Fatal("Unexpected error writing to JSONEventWriter: " + err.Error())
+	}
+
+	event = Event{
+		Type:      DebugEvent,
+		Timestamp: now(),
+		Tags:      Tags{"TestJSONEventWriter"},
+		Message:   "Never gets logged",
 	}
 
 	if err := ew.Write(event); err != nil {
@@ -134,7 +167,7 @@ func TestJSONEventWriter(t *testing.T) {
 		t.Fatal("Unexpected error reading output buffer: " + err.Error())
 	}
 
-	expected := `{"type":"Debug","timestamp":"2015-09-01T14:22:36Z","tags":` +
+	expected := `{"type":"Info","timestamp":"2015-09-01T14:22:36Z","tags":` +
 		`["TestJSONEventWriter"],"message":"Log message"}` + "\n"
 
 	if got := string(bytes); got != expected {
