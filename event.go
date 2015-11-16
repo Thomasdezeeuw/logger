@@ -80,13 +80,14 @@ const (
 	ErrorEvent
 	FatalEvent
 	ThumbEvent
+	LogEvent // Used in relaying logs from the default log package.
 )
 
 // Names and indices for use in EventType.String and Event.Bytes, can be
 // modified by NewEventType
 var (
-	eventTypeNames   = "DebugInfoWarnErrorFatalThumb"
-	eventTypeIndices = []int{0, 5, 9, 13, 18, 23, 28}
+	eventTypeNames   = "DebugInfoWarnErrorFatalThumbLog"
+	eventTypeIndices = []int{0, 5, 9, 13, 18, 23, 28, 31}
 )
 
 // String returns the name of the event type. Custom event types are also
