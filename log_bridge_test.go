@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func TestSetLogOutput(t *testing.T) {
+func TestBridgeLogPgk(t *testing.T) {
 	defer reset()
 
 	tags := Tags{"TestSetLogOutput", "log"}
