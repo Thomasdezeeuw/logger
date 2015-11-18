@@ -38,7 +38,7 @@ func TestBridgeLogPgk(t *testing.T) {
 				len(expected), len(ew.events))
 		}
 
-		const margin = 10 * time.Millisecond
+		const margin = 100 * time.Millisecond
 		for i, event := range ew.events {
 			expectedEvent := expected[i]
 
