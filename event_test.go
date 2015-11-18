@@ -121,9 +121,10 @@ func TestEventType(t *testing.T) {
 	}
 }
 
-const maxCostumEventTypes = math.MaxUint16 - 7 // minus builtin event types.
-
 var (
+	// Minus builtin event types.
+	maxCostumEventTypes = math.MaxUint16 - len(eventTypeIndices)
+
 	oldEventTypeNames   = eventTypeNames
 	oldEventTypeIndices = eventTypeIndices
 )
