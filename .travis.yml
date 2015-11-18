@@ -12,7 +12,6 @@ go:
   - tip
 install:
   - go get ./...
-  - go get -u github.com/golang/lint/golint
   - go get -u github.com/remyoudompheng/go-misc/deadcode
   - go get -u github.com/fzipp/gocyclo
   - go get golang.org/x/tools/cmd/cover
