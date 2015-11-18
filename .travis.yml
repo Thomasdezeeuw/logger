@@ -15,7 +15,7 @@ install:
   - go get -u github.com/golang/lint/golint
   - go get -u github.com/remyoudompheng/go-misc/deadcode
   - go get -u github.com/fzipp/gocyclo
-  - go get code.google.com/p/go.tools/cmd/cover
+  - go get golang.org/x/tools/cmd/cover
   - go get github.com/mattn/goveralls
 script:
   - gofmt -s -d *.go
