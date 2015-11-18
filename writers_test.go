@@ -66,6 +66,19 @@ func TestFileEventWriter(t *testing.T) {
 	}
 }
 
+func TestNewFileEventWriter(t *testing.T) {
+	path := filepath.Clean("/a/path/to/a/file/that/should/not/be/here")
+	_, err := NewFileEventWriter(path, InfoEvent)
+	if err == nil {
+		os.Remove(path)
+		t.Fatal("Expected an error when creating a file", err.Error())
+	}
+
+	if !os.IsNotExist(err) {
+		t.Fatal("Expected an file doesn't exist error, but got", err.Error())
+	}
+}
+
 func TestConsoleEventWriter(t *testing.T) {
 	var buf bytes.Buffer
 	var errBuf bytes.Buffer
