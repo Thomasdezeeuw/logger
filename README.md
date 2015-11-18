@@ -2,6 +2,7 @@
 
 [![GoDoc](https://godoc.org/github.com/Thomasdezeeuw/logger?status.svg)](https://godoc.org/github.com/Thomasdezeeuw/logger)
 [![Build Status](https://travis-ci.org/Thomasdezeeuw/logger.png?branch=master)](https://travis-ci.org/Thomasdezeeuw/logger)
+[![Coverage Status](https://coveralls.io/repos/Thomasdezeeuw/logger/badge.svg?branch=master&service=github)](https://coveralls.io/github/Thomasdezeeuw/logger?branch=master)
 
 Package logger provides asynchronous logging for [Go](https://golang.org/). It
 is build for customisation and speed. It uses a custom EventWriter so any custom
