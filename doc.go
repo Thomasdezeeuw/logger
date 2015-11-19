@@ -19,6 +19,7 @@
 // asynchronous and sending to a closed channel will panic.
 //
 // By default there are six different event types (from lower to higher): debug,
-// info, warn, error, fatal and thumb. But new event types can be created, to be
-// used in the custom EventWriter.
+// info, warn, error, fatal and thumb. But new event types can be created using
+// NewEventType. These can then be used in a custom EventWriter to extract data
+// from Event.Data.
 package logger
