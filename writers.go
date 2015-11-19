@@ -48,8 +48,8 @@ func (ew *fileEventWriter) Close() error {
 
 // NewFileEventWriter creates a EventWriter that writes to the given file.
 // MinType is the minimal EventType an event must have to be logged. For example
-// if minType is InfoEvent, then any events with an EventType of Debug will not
-// be logged.
+// if minType is InfoEvent, then any events with an EventType of DebugEvent will
+// not be logged.
 func NewFileEventWriter(path string, minType EventType) (EventWriter, error) {
 	f, err := os.OpenFile(path, defaultFileFlag, defaultFilePermission)
 	if err != nil {
@@ -93,7 +93,7 @@ var (
 // NewConsoleEventWriter creates a new EventWriter that writes to standard out
 // and standard error. MinType is the minimal EventType an event must have to
 // be logged. For example if minType is InfoEvent, then any events with an
-// EventType of Debug will not be logged.
+// EventType of DebugEvent will not be logged.
 func NewConsoleEventWriter(minType EventType) EventWriter {
 	return &consoleEventWriter{stdout, stderr, minType}
 }
@@ -121,8 +121,8 @@ func (ew *jsonEventWriter) Close() error {
 
 // NewJSONEventWriter creates a new EventWriter that writes JSON to the given
 // writer. MinType is the minimal EventType an event must have to be logged. For
-// example if minType is InfoEvent, then any events with an EventType of Debug
-// will not be logged.
+// example if minType is InfoEvent, then any events with an EventType of
+// DebugEvent will not be logged.
 func NewJSONEventWriter(w io.Writer, errorHandler func(error), minType EventType) EventWriter {
 	return &jsonEventWriter{json.NewEncoder(w), errorHandler, minType}
 }

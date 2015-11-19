@@ -133,7 +133,7 @@ func writeEvent(ew EventWriter, event Event) error {
 }
 
 // Close stops all the Log Operations from being usable, and they will panic if
-// used after close is called. It also closes all EventWriters and returns the
+// used after Close is called. It also closes all EventWriters and returns the
 // first returned error. The EventWriters are closed in the order they are
 // passed to Start.
 func Close() error {
