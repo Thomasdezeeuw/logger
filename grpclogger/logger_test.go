@@ -2,8 +2,6 @@ package grpclogger
 
 import (
 	"bytes"
-	"os"
-	"os/exec"
 	"reflect"
 	"testing"
 	"time"
@@ -110,24 +108,25 @@ func TestGrpcLogger(t *testing.T) {
 }
 
 func TestExit(t *testing.T) {
-	const closeFnMsg = "Close function called"
-	if os.Getenv("TestExit") == "1" {
-		closeFn := func() {
-			os.Stderr.WriteString(closeFnMsg)
-		}
+	oldExit := osExit
+	defer func() {
+		osExit = oldExit
+	}()
 
-		exit(closeFn)
-		return
+	var exitCode int
+	var closedCalled bool
+	osExit = func(n int) {
+		exitCode = n
+	}
+	closeFn := func() {
+		closedCalled = true
 	}
 
-	var buf bytes.Buffer
-	cmd := exec.Command(os.Args[0], "-test.run=TestExit")
-	cmd.Env = append(os.Environ(), "TestExit=1")
-	cmd.Stderr = &buf
+	exit(closeFn)
 
-	if err := cmd.Run(); err == nil {
-		t.Fatal("Expected the process to exit with status code 1, but it didn't")
-	} else if got := buf.String(); got != closeFnMsg {
+	if !closedCalled {
 		t.Fatal("Close function not called")
+	} else if exitCode != 1 {
+		t.Fatalf("Expceted exit to be called with 1, but got %d", exitCode)
 	}
 }

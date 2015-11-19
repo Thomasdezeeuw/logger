@@ -56,10 +56,13 @@ func interfacesToString(value []interface{}) string {
 	return str[:len(str)-1]
 }
 
+// Stubbed for testing.
+var osExit = os.Exit
+
 // Hate to do this, but it is what the default log package does.
 var exit = func(closeFn func()) {
 	closeFn()
-	os.Exit(1)
+	osExit(1)
 }
 
 // CreateLogger creates a new logger that can be used in grpc/grpclog. It
