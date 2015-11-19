@@ -238,6 +238,7 @@ func Log(event Event) {
 }
 
 // interfaceToString converts a interface{} variable to a string.
+// Keep in sync with logger/grpclogger/logger.go
 func interfaceToString(value interface{}) string {
 	switch v := value.(type) {
 	case string:
