@@ -14,6 +14,9 @@
 //
 // Because the logger package is asynchronous Close musted be called before the
 // program exits, this way logger will make sure all log event will be written.
+// After Close is called all calls to any log operation will panic. This is
+// because internally the logger package uses a channel to make the logging
+// asynchronous and sending to a closed channel will panic.
 //
 // By default there are six different event types (from lower to higher): debug,
 // info, warn, error, fatal and thumb. But new event types can be created, to be
