@@ -12,6 +12,8 @@ import (
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/Thomasdezeeuw/logger/internal/util"
 )
 
 // Time returned in calling now(), setup and test in init.
@@ -110,7 +112,7 @@ func TestLog(t *testing.T) {
 			{Type: ErrorEvent, Timestamp: now(), Tags: tags, Message: "Error formatted message"},
 			{Type: FatalEvent, Timestamp: now(), Tags: tags, Message: "Fatal message"},
 			{Type: ThumbEvent, Timestamp: now(), Tags: tags, Message: "Function testThumstone called by " +
-				fn.Name() + ", from file " + file + " on line 88"},
+				fn.Name() + ", from file " + file + " on line 90"},
 			event,
 		}
 
@@ -155,7 +157,7 @@ func TestStartTwice(t *testing.T) {
 		}
 
 		const expected = "logger: can only Start once"
-		if got := interfaceToString(recv); expected != got {
+		if got := util.InterfaceToString(recv); expected != got {
 			t.Fatalf("Expected to panic with %q, but paniced with %q", expected, got)
 		}
 	}()
@@ -171,7 +173,7 @@ func TestStartNoEventWriter(t *testing.T) {
 		}
 
 		const expected = "logger: need atleast a single EventWriter to write to"
-		if got := interfaceToString(recv); expected != got {
+		if got := util.InterfaceToString(recv); expected != got {
 			t.Fatalf("Expected to panic with %q, but paniced with %q", expected, got)
 		}
 	}()

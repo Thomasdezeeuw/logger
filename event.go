@@ -9,6 +9,8 @@ import (
 	"math"
 	"strconv"
 	"time"
+
+	"github.com/Thomasdezeeuw/logger/internal/util"
 )
 
 // TimeFormat is used in Event.String() and Event.Bytes() to format the
@@ -41,7 +43,7 @@ func (event Event) String() string {
 	str += event.Tags.String() + ": "
 	str += event.Message
 	if event.Data != nil {
-		str += ", " + interfaceToString(event.Data)
+		str += ", " + util.InterfaceToString(event.Data)
 	}
 	return str
 }
@@ -63,7 +65,7 @@ func (event Event) MarshalJSON() ([]byte, error) {
 		event.Type.String(), event.Timestamp.UTC().Format(time.RFC3339Nano),
 		string(tagsJSON), event.Message)
 	if event.Data != nil {
-		str += fmt.Sprintf(`, "data": %q`, interfaceToString(event.Data))
+		str += fmt.Sprintf(`, "data": %q`, util.InterfaceToString(event.Data))
 	}
 	str += "}"
 	return []byte(str), nil

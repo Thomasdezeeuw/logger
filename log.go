@@ -9,6 +9,8 @@ import (
 	"runtime"
 	"sync"
 	"time"
+
+	"github.com/Thomasdezeeuw/logger/internal/util"
 )
 
 const (
@@ -202,7 +204,7 @@ func Fatal(tags Tags, recv interface{}) {
 	n := runtime.Stack(stackTrace, false)
 	stackTrace = stackTrace[:n]
 
-	msg := interfaceToString(recv)
+	msg := util.InterfaceToString(recv)
 	eventChannel <- Event{FatalEvent, now(), tags, msg, stackTrace}
 }
 
@@ -235,20 +237,4 @@ func Thumbstone(tags Tags, functionName string) {
 func Log(event Event) {
 	event.Timestamp = now()
 	eventChannel <- event
-}
-
-// interfaceToString converts a interface{} variable to a string.
-// Keep in sync with logger/grpclogger/logger.go
-func interfaceToString(value interface{}) string {
-	switch v := value.(type) {
-	case string:
-		return v
-	case fmt.Stringer:
-		return v.String()
-	case []byte:
-		return string(v)
-	case error:
-		return v.Error()
-	}
-	return fmt.Sprintf("%v", value)
 }

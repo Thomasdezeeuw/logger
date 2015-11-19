@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/Thomasdezeeuw/logger"
+	"github.com/Thomasdezeeuw/logger/internal/util"
 	"google.golang.org/grpc/grpclog"
 )
 
@@ -49,27 +50,10 @@ func (log *log) Println(args ...interface{}) {
 func interfacesToString(value []interface{}) string {
 	var str string
 	for _, v := range value {
-		str += interfaceToString(v)
+		str += util.InterfaceToString(v)
 		str += " "
 	}
 	return str[:len(str)-1]
-}
-
-// interfaceToString converts a interface{} variable to a string.
-// Keep in sync with logger/log.go.
-// todo: also maybe move to an internal package.
-func interfaceToString(value interface{}) string {
-	switch v := value.(type) {
-	case string:
-		return v
-	case fmt.Stringer:
-		return v.String()
-	case []byte:
-		return string(v)
-	case error:
-		return v.Error()
-	}
-	return fmt.Sprintf("%v", value)
 }
 
 // Hate to do this, but it is what the default log package does.
