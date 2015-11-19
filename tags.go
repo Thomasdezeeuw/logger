@@ -39,7 +39,7 @@ func (tags Tags) Bytes() []byte {
 	return buf
 }
 
-// MarshalJSON returns an JSON formatted string slice (or array).
+// MarshalJSON returns an JSON formatted string slice (or JSON array).
 func (tags Tags) MarshalJSON() ([]byte, error) {
 	if len(tags) == 0 {
 		return []byte("[]"), nil
@@ -54,7 +54,7 @@ func (tags Tags) MarshalJSON() ([]byte, error) {
 		buf = append(buf, ' ')
 	}
 
-	// Drop the last "," and a closing bracket.
+	// Drop the last "," and add a closing bracket.
 	buf = append(buf[:len(buf)-2], ']')
 	return buf, nil
 }
