@@ -134,9 +134,9 @@ func resetEventTypes() {
 	eventTypeIndices = oldEventTypeIndices
 }
 
-func TestNewLogLevelLimit(t *testing.T) {
+func TestNewEventTypeLimit(t *testing.T) {
 	if testing.Short() {
-		t.Skip("Skipping TestNewLogLevelLimit in short mode")
+		t.Skip("Skipping TestNewEventTypeLimit in short mode")
 	}
 	defer resetEventTypes()
 
