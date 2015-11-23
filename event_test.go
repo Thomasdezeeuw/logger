@@ -97,6 +97,7 @@ func TestEventType(t *testing.T) {
 		{WarnEvent, "Warn", `"Warn"`},
 		{ErrorEvent, "Error", `"Error"`},
 		{FatalEvent, "Fatal", `"Fatal"`},
+		{LogEvent, "Log", `"Log"`},
 		{EventType(255), "EventType(255)", `"EventType(255)"`},
 		{NewEventType("my-event-type"), "my-event-type", `"my-event-type"`},
 		{NewEventType("my-\"event\"-type"), "my-\"event\"-type", `"my-\"event\"-type"`},
@@ -117,6 +118,45 @@ func TestEventType(t *testing.T) {
 		} else if got := string(json); got != test.expectedJSON {
 			t.Errorf("Expected EventType(%v).MarshalJSON() to return %q, but got %q",
 				test.eventType, test.expectedJSON, got)
+		}
+
+		var e = EventType(0)
+		var gotEventType = &e
+
+		if test.eventType == EventType(255) {
+			expected := ErrEventTypeUnknown.Error()
+
+			if err := gotEventType.UnmarshalText([]byte(test.expected)); err == nil {
+				t.Fatalf("Expected the text unmarshalling of %v to return an error",
+					test.eventType)
+			} else if got := err.Error(); got != expected {
+				t.Fatalf("Expected the returned error to be %s, but got %s",
+					expected, got)
+			}
+
+			if err := gotEventType.UnmarshalJSON([]byte(test.expected)); err == nil {
+				t.Fatalf("Expected the JSON unmarshalling of %v to return an error",
+					test.eventType)
+			} else if got := err.Error(); got != expected {
+				t.Fatalf("Expected the returned error to be %s, but got %s",
+					expected, got)
+			}
+
+			continue
+		}
+
+		if err := gotEventType.UnmarshalText([]byte(test.expected)); err != nil {
+			t.Fatalf("Unexpected error text unmarshalling %s", err.Error())
+		} else if *gotEventType != test.eventType {
+			t.Fatalf("Expected the event type to be %v, but got %v",
+				test.eventType, gotEventType)
+		}
+
+		if err := gotEventType.UnmarshalJSON([]byte(test.expectedJSON)); err != nil {
+			t.Fatalf("Unexpected error JSON unmarshalling %s", err.Error())
+		} else if *gotEventType != test.eventType {
+			t.Fatalf("Expected the event type to be %v, but got %v",
+				test.eventType, gotEventType)
 		}
 	}
 }

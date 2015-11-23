@@ -5,6 +5,7 @@
 package logger
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -117,6 +118,46 @@ func (eventType EventType) Bytes() []byte {
 func (eventType EventType) MarshalJSON() ([]byte, error) {
 	qoutedEventType := strconv.Quote(eventType.String())
 	return []byte(qoutedEventType), nil
+}
+
+// ErrEventTypeUnknown gets returned by EventType.UnmarshalJSON and
+// EventType.UnmarshalText if the EventType is not known.
+var ErrEventTypeUnknown = errors.New("unkown EventType")
+
+// UnmarshalJSON converts a qouted string EventType (e.g. "Error") to an actual
+// typed EventTyped.
+//
+// Note: custom EventTypes are supported, but must created using NewEventType.
+func (eventType *EventType) UnmarshalJSON(rawType []byte) error {
+	if len(rawType) <= 2 {
+		return ErrEventTypeUnknown
+	}
+
+	// Drop the qoutes.
+	rawText, err := strconv.Unquote(string(rawType))
+	if err != nil {
+		return ErrEventTypeUnknown
+	}
+
+	return eventType.UnmarshalText([]byte(rawText))
+}
+
+// UnmarshalText converts a string EventType (e.g. Error) to an actual typed
+// EventTyped.
+//
+// Note: custom EventTypes are supported, but must created using NewEventType.
+func (eventType *EventType) UnmarshalText(rawType []byte) error {
+	if len(rawType) == 0 {
+		return ErrEventTypeUnknown
+	}
+
+	t, ok := findEventType(string(rawType))
+	if !ok {
+		return ErrEventTypeUnknown
+	}
+
+	*eventType = t
+	return nil
 }
 
 // NewEventType creates a new fully supported custom EventType to be used in
