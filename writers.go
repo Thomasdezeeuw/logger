@@ -50,7 +50,7 @@ func (ew *fileEventWriter) Close() error {
 // MinType is the minimal EventType an event must have to be logged. For example
 // if minType is InfoEvent, then any events with an EventType of DebugEvent will
 // not be logged.
-func NewFileEventWriter(path string, minType EventType) (EventWriter, error) {
+func NewFileEventWriter(minType EventType, path string) (EventWriter, error) {
 	f, err := os.OpenFile(path, defaultFileFlag, defaultFilePermission)
 	if err != nil {
 		return nil, err
@@ -123,6 +123,6 @@ func (ew *jsonEventWriter) Close() error {
 // writer. MinType is the minimal EventType an event must have to be logged. For
 // example if minType is InfoEvent, then any events with an EventType of
 // DebugEvent will not be logged.
-func NewJSONEventWriter(w io.Writer, errorHandler func(error), minType EventType) EventWriter {
+func NewJSONEventWriter(minType EventType, w io.Writer, errorHandler func(error)) EventWriter {
 	return &jsonEventWriter{json.NewEncoder(w), errorHandler, minType}
 }

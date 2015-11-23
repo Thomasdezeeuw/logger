@@ -19,7 +19,7 @@ func TestFileEventWriter(t *testing.T) {
 	file := strconv.FormatInt(time.Now().UnixNano(), 10)
 	path := filepath.Join(os.TempDir(), "logger_"+file+".log")
 
-	ew, err := NewFileEventWriter(path, InfoEvent)
+	ew, err := NewFileEventWriter(InfoEvent, path)
 	if err != nil {
 		t.Fatal("Unexpected error creating new file event writer: " + err.Error())
 	}
@@ -68,7 +68,7 @@ func TestFileEventWriter(t *testing.T) {
 
 func TestNewFileEventWriter(t *testing.T) {
 	path := filepath.Clean("/a/path/to/a/file/that/should/not/be/here")
-	_, err := NewFileEventWriter(path, InfoEvent)
+	_, err := NewFileEventWriter(InfoEvent, path)
 	if err == nil {
 		os.Remove(path)
 		t.Fatal("Expected an error when creating a file", err.Error())
@@ -145,7 +145,7 @@ func TestJSONEventWriter(t *testing.T) {
 	errorHandler := func(err error) {
 		errBuf.WriteString(err.Error())
 	}
-	ew := NewJSONEventWriter(&buf, errorHandler, InfoEvent)
+	ew := NewJSONEventWriter(InfoEvent, &buf, errorHandler)
 
 	event := Event{
 		Type:      InfoEvent,
