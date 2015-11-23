@@ -122,6 +122,8 @@ func TestEventType(t *testing.T) {
 }
 
 func TestNewEventTypeWithEmptyName(t *testing.T) {
+	defer resetEventTypes()
+
 	defer func() {
 		recv := recover()
 		if recv == nil {
@@ -139,13 +141,15 @@ func TestNewEventTypeWithEmptyName(t *testing.T) {
 }
 
 func TestNewEventTypeNotUnique(t *testing.T) {
+	defer resetEventTypes()
+
 	defer func() {
 		recv := recover()
 		if recv == nil {
 			t.Fatal(`Expected a panic, but didn't get one`)
 		}
 
-		expected := "logger: EventType with name not unique"
+		expected := "logger: EventType must be unique"
 		got := recv.(string)
 		if got != expected {
 			t.Fatalf("Expected panic value to be %s, but got %s", expected, got)
