@@ -121,7 +121,7 @@ func (eventType EventType) MarshalJSON() ([]byte, error) {
 
 // NewEventType creates a new fully supported custom EventType to be used in
 // logging. This function makes sure that all EventType functions (e.g
-// EventType.String) work correctly. The name can't be empty.
+// EventType.String) work correctly. The name can't be empty and must be unique.
 //
 // Note: THIS FUNCTION IS NOT SAFE FOR CONCURRENT USE, use it before starting to
 // log.
@@ -135,7 +135,25 @@ func NewEventType(name string) EventType {
 		panic("logger: EventType name can't be empty")
 	}
 
+	if _, ok := findEventType(name); !ok {
+		panic("logger: EventType must be unique")
+	}
+
 	eventTypeNames += name
 	eventTypeIndices = append(eventTypeIndices, len(eventTypeNames))
 	return EventType(len(eventTypeIndices) - 2)
+}
+
+func findEventType(name string) (EventType, bool) {
+	for i, l := 0, len(eventTypeIndices)-1; i < l; i++ {
+		start := eventTypeIndices[i]
+		end := eventTypeIndices[i+1]
+		possibly := eventTypeNames[start:end]
+
+		if possibly == name {
+			return EventType(i), true
+		}
+	}
+
+	return 0, false
 }

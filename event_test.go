@@ -138,6 +138,24 @@ func TestNewEventTypeWithEmptyName(t *testing.T) {
 	NewEventType("")
 }
 
+func TestNewEventTypeNotUnique(t *testing.T) {
+	defer func() {
+		recv := recover()
+		if recv == nil {
+			t.Fatal(`Expected a panic, but didn't get one`)
+		}
+
+		expected := "logger: EventType with name not unique"
+		got := recv.(string)
+		if got != expected {
+			t.Fatalf("Expected panic value to be %s, but got %s", expected, got)
+		}
+	}()
+
+	NewEventType("my-event-type")
+	NewEventType("my-event-type")
+}
+
 var (
 	// Minus builtin event types.
 	maxCostumEventTypes = math.MaxUint16 - len(eventTypeIndices)
