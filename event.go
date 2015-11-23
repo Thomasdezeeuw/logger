@@ -135,7 +135,7 @@ func NewEventType(name string) EventType {
 		panic("logger: EventType name can't be empty")
 	}
 
-	if _, ok := findEventType(name); !ok {
+	if _, ok := findEventType(name); ok {
 		panic("logger: EventType must be unique")
 	}
 
