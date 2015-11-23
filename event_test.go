@@ -125,13 +125,13 @@ func TestNewEventTypeWithEmptyName(t *testing.T) {
 	defer func() {
 		recv := recover()
 		if recv == nil {
-			t.Fatal(`Expceted NewEventType("") to panic, but it didn't`)
+			t.Fatal(`Expected NewEventType("") to panic, but it didn't`)
 		}
 
 		expected := "logger: EventType name can't be empty"
 		got := recv.(string)
 		if got != expected {
-			t.Fatalf("Expceted panic value to be %s, but got %s", expected, got)
+			t.Fatalf("Expected panic value to be %s, but got %s", expected, got)
 		}
 	}()
 
