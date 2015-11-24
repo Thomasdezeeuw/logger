@@ -197,38 +197,14 @@ func TestEventTypeUnmarshalling(t *testing.T) {
 func TestNewEventTypeWithEmptyName(t *testing.T) {
 	defer resetEventTypes()
 
-	defer func() {
-		recv := recover()
-		if recv == nil {
-			t.Fatal(`Expected NewEventType("") to panic, but it didn't`)
-		}
-
-		expected := "logger: EventType name can't be empty"
-		got := recv.(string)
-		if got != expected {
-			t.Fatalf("Expected panic value to be %s, but got %s", expected, got)
-		}
-	}()
+	defer expectPanic(t, "logger: EventType name can't be empty")
 
 	NewEventType("")
 }
 
 func TestNewEventTypeNotUnique(t *testing.T) {
 	defer resetEventTypes()
-
-	defer func() {
-		recv := recover()
-		if recv == nil {
-			t.Fatal(`Expected a panic, but didn't get one`)
-		}
-
-		expected := "logger: EventType must be unique"
-		got := recv.(string)
-		if got != expected {
-			t.Fatalf("Expected panic value to be %s, but got %s", expected, got)
-		}
-	}()
-
+	defer expectPanic(t, "logger: EventType must be unique")
 	NewEventType("my-event-type")
 	NewEventType("my-event-type")
 }

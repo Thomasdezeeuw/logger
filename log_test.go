@@ -12,8 +12,6 @@ import (
 	"runtime"
 	"testing"
 	"time"
-
-	"github.com/Thomasdezeeuw/logger/internal/util"
 )
 
 // Time returned in calling now(), setup and test in init.
@@ -112,7 +110,7 @@ func TestLog(t *testing.T) {
 			{Type: ErrorEvent, Timestamp: now(), Tags: tags, Message: "Error formatted message"},
 			{Type: FatalEvent, Timestamp: now(), Tags: tags, Message: "Fatal message"},
 			{Type: ThumbEvent, Timestamp: now(), Tags: tags, Message: "Function testThumstone called by " +
-				fn.Name() + ", from file " + file + " on line 90"},
+				fn.Name() + ", from file " + file + " on line 88"},
 			event,
 		}
 
@@ -150,33 +148,13 @@ func TestStartTwice(t *testing.T) {
 		t.Fatal("Unexpected error closing initial log: " + err.Error())
 	}
 
-	defer func() {
-		recv := recover()
-		if recv == nil {
-			t.Fatal("Expected a second call to Start to panic, but it didn't")
-		}
-
-		const expected = "logger: can only Start once"
-		if got := util.InterfaceToString(recv); expected != got {
-			t.Fatalf("Expected to panic with %q, but paniced with %q", expected, got)
-		}
-	}()
+	defer expectPanic(t, "logger: can only Start once")
 	Start(&ew)
 }
 
 func TestStartNoEventWriter(t *testing.T) {
 	defer reset()
-	defer func() {
-		recv := recover()
-		if recv == nil {
-			t.Fatal("Expected a call to Start without any EventWriters to panic, but it didn't")
-		}
-
-		const expected = "logger: need atleast a single EventWriter to write to"
-		if got := util.InterfaceToString(recv); expected != got {
-			t.Fatalf("Expected to panic with %q, but paniced with %q", expected, got)
-		}
-	}()
+	defer expectPanic(t, "logger: need atleast a single EventWriter to write to")
 	Start()
 }
 
@@ -256,4 +234,16 @@ func reset() {
 	eventChannelClosed = make(chan struct{}, 1)
 	eventWriters = []EventWriter{}
 	started = false
+}
+
+func expectPanic(t *testing.T, expected string) {
+	recv := recover()
+	if recv == nil {
+		t.Fatal(`Expected a panic, but didn't get one`)
+	}
+
+	got := recv.(string)
+	if got != expected {
+		t.Fatalf("Expected panic value to be %s, but got %s", expected, got)
+	}
 }
