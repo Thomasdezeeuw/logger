@@ -83,14 +83,15 @@ func TestEvent(t *testing.T) {
 	}
 }
 
-func TestEventType(t *testing.T) {
-	defer resetEventTypes()
 
-	tests := []struct {
-		eventType    EventType
-		expected     string
-		expectedJSON string
-	}{
+type eventTypeTest struct {
+	EventType EventType
+	Text      string
+	JSON      string
+}
+
+func getEventTypesTests() []eventTypeTest {
+	return []eventTypeTest{
 		{DebugEvent, "Debug", `"Debug"`},
 		{ThumbEvent, "Thumb", `"Thumb"`},
 		{InfoEvent, "Info", `"Info"`},
@@ -102,61 +103,62 @@ func TestEventType(t *testing.T) {
 		{NewEventType("my-event-type"), "my-event-type", `"my-event-type"`},
 		{NewEventType("my-\"event\"-type"), "my-\"event\"-type", `"my-\"event\"-type"`},
 	}
+}
 
-	for _, test := range tests {
-		got, gotBytes := test.eventType.String(), string(test.eventType.Bytes())
-		if gotBytes != test.expected {
+func TestEventTypeStringAndBytes(t *testing.T) {
+	defer resetEventTypes()
+
+	for _, test := range getEventTypesTests() {
+		got, gotBytes := test.EventType.String(), string(test.EventType.Bytes())
+		if gotBytes != test.Text {
 			t.Errorf("Expected EventType(%v).Bytes() to return %q, but got %q",
-				test.eventType, test.expected, gotBytes)
-		} else if got != test.expected {
+				test.EventType, test.Text, gotBytes)
+		} else if got != test.Text {
 			t.Errorf("Expected EventType(%v).String() to return %q, but got %q",
-				test.eventType, test.expected, got)
+				test.EventType, test.Text, got)
 		}
+	}
+}
 
-		if json, err := test.eventType.MarshalJSON(); err != nil {
-			t.Errorf("Unexpected error marshaling %v into json: %s", test.eventType, err.Error())
-		} else if got := string(json); got != test.expectedJSON {
+func TestEventTypeMarhslling(t *testing.T) {
+	defer resetEventTypes()
+
+	for _, test := range getEventTypesTests() {
+		if json, err := test.EventType.MarshalJSON(); err != nil {
+			t.Errorf("Unexpected error marshaling %v into json: %s", test.EventType, err.Error())
+		} else if got := string(json); got != test.JSON {
 			t.Errorf("Expected EventType(%v).MarshalJSON() to return %q, but got %q",
-				test.eventType, test.expectedJSON, got)
+				test.EventType, test.JSON, got)
 		}
+	}
+}
 
+func TestEventTypeUnmarshalling(t *testing.T) {
+	defer resetEventTypes()
+
+	for _, test := range getEventTypesTests() {
 		var e = EventType(0)
 		var gotEventType = &e
 
-		if test.eventType == EventType(255) {
-			expected := ErrEventTypeUnknown.Error()
-
-			if err := gotEventType.UnmarshalText([]byte(test.expected)); err == nil {
-				t.Fatalf("Expected the text unmarshalling of %v to return an error",
-					test.eventType)
-			} else if got := err.Error(); got != expected {
-				t.Fatalf("Expected the returned error to be %s, but got %s",
-					expected, got)
-			}
-
-			if err := gotEventType.UnmarshalJSON([]byte(test.expected)); err == nil {
-				t.Fatalf("Expected the JSON unmarshalling of %v to return an error",
-					test.eventType)
-			} else if got := err.Error(); got != expected {
-				t.Fatalf("Expected the returned error to be %s, but got %s",
-					expected, got)
-			}
-
-			continue
+		var expectedError error = nil
+		if _, ok := findEventType(test.EventType.String()); !ok {
+			expectedError = ErrEventTypeUnknown
 		}
 
-		if err := gotEventType.UnmarshalText([]byte(test.expected)); err != nil {
-			t.Fatalf("Unexpected error text unmarshalling %s", err.Error())
-		} else if *gotEventType != test.eventType {
+		if err := gotEventType.UnmarshalText([]byte(test.Text)); err != expectedError {
+			t.Fatalf("Expected EventType.UnmarshalText(%s) to return error %v, but got %v",
+				test.Text, expectedError, err)
+		} else if expectedError == nil && *gotEventType != test.EventType {
 			t.Fatalf("Expected the event type to be %v, but got %v",
-				test.eventType, gotEventType)
+				test.EventType, gotEventType)
 		}
 
-		if err := gotEventType.UnmarshalJSON([]byte(test.expectedJSON)); err != nil {
-			t.Fatalf("Unexpected error JSON unmarshalling %s", err.Error())
-		} else if *gotEventType != test.eventType {
+		if err := gotEventType.UnmarshalJSON([]byte(test.JSON)); err != expectedError {
+			t.Fatalf("Expected EventType.UnmarshalJSON(%s) to return error %v, but got %v",
+				test.JSON, expectedError, err)
+		} else if expectedError == nil && *gotEventType != test.EventType {
 			t.Fatalf("Expected the event type to be %v, but got %v",
-				test.eventType, gotEventType)
+				test.EventType, gotEventType)
 		}
 	}
 }
