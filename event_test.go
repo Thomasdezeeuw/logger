@@ -83,7 +83,6 @@ func TestEvent(t *testing.T) {
 	}
 }
 
-
 type eventTypeTest struct {
 	EventType EventType
 	Text      string
@@ -120,7 +119,7 @@ func TestEventTypeStringAndBytes(t *testing.T) {
 	}
 }
 
-func TestEventTypeMarhslling(t *testing.T) {
+func TestEventTypeMarshalling(t *testing.T) {
 	defer resetEventTypes()
 
 	for _, test := range getEventTypesTests() {
