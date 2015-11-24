@@ -83,6 +83,38 @@ func TestEvent(t *testing.T) {
 	}
 }
 
+func TestFindEventType(t *testing.T) {
+	customEvent1 := NewEventType("custom-event-1")
+	customEvent2 := NewEventType("custom-event-2")
+
+	tests := []struct {
+		input    string
+		expected EventType
+		found    bool
+	}{
+		{"Debug", DebugEvent, true},
+		{"Info", InfoEvent, true},
+		{"Warn", WarnEvent, true},
+		{"Error", ErrorEvent, true},
+		{"Fatal", FatalEvent, true},
+		{"Thumb", ThumbEvent, true},
+		{"Log", LogEvent, true},
+
+		{"custom-event-1", customEvent1, true},
+		{"custom-event-2", customEvent2, true},
+		{"not-found", 0, false},
+	}
+
+	for _, test := range tests {
+		got, ok := findEventType(test.input)
+
+		if ok != test.found || (ok && got != test.expected) {
+			t.Fatalf("Expected findEventType(%q) to return %v and %t, but got %v and %t",
+				test.input, test.expected, test.found, got, ok)
+		}
+	}
+}
+
 type eventTypeTest struct {
 	EventType EventType
 	Text      string
