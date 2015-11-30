@@ -22,6 +22,11 @@ const TimeFormat = "2006-01-02 15:04:05"
 // the current timezone, recommend is to log time in the UTC timezone, by
 // calling Event.Timestamp.UTC(), Event.String and Event.Bytes does this by
 // default.
+//
+// Advised is to store an EventType using it's string format (using
+// EventType.String or .Bytes), not it's numeral format. Because the numeral
+// value of an EventType might change, this happens when a new builtin EventType
+// gets added, or if the order of calls to NewEventType changes.
 type Event struct {
 	Type      EventType
 	Timestamp time.Time
@@ -163,6 +168,11 @@ func (eventType *EventType) UnmarshalText(rawType []byte) error {
 // NewEventType creates a new fully supported custom EventType to be used in
 // logging. This function makes sure that all EventType functions (e.g
 // EventType.String) work correctly. The name can't be empty and must be unique.
+//
+// Advised is to store an EventType using it's string format (using
+// EventType.String or .Bytes), not it's numeral format. Because the numeral
+// value of an EventType might change, this happens when a new builtin EventType
+// gets added, or if the order of calls to NewEventType changes.
 //
 // Note: THIS FUNCTION IS NOT SAFE FOR CONCURRENT USE, use it before starting to
 // log.
