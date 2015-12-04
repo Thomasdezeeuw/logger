@@ -63,6 +63,10 @@ func Start(ews ...EventWriter) {
 	go writeEvents()
 }
 
+// ErrBadEventWriter gets passed to the error handler of an EventWriter after it
+// returned too many write errors in a row. After the error handler of the
+// EventWriter is called with this error the writer is considered faulty and
+// will no longer recive any Events.
 var ErrBadEventWriter = fmt.Errorf("EventWriter is bad, %d faulty writes, EventWriter will be dropped", maxNWriteErrors)
 
 // Needs to be run in it's own goroutine, it blocks until eventChannel is
