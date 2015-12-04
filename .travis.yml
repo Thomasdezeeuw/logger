@@ -21,9 +21,9 @@ script:
   - go vet
   - deadcode
   - gocyclo -over 10 *.go
-  - go test -race -v -covermode count -coverprofile coverage.out ./
-  - go test -race -v -covermode count -coverprofile coverage2.out ./grpclogger
-  - go test -race -v -covermode count -coverprofile coverage3.out ./internal/util
+  - go test -race -v -covermode atomic -coverprofile coverage.out ./
+  - go test -race -v -covermode atomic -coverprofile coverage2.out ./grpclogger
+  - go test -race -v -covermode atomic -coverprofile coverage3.out ./internal/util
   - cat coverage2.out | tail -n +2 >> coverage.out
   - cat coverage3.out | tail -n +2 >> coverage.out
   - goveralls -coverprofile coverage.out -service travis-ci -repotoken $COVERALLS_TOKEN
