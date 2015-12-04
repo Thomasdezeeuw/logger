@@ -1,4 +1,4 @@
-// Grpclogger package creates a logger interface to be used in grpc logger
+// Package grpclogger creates a logger interface to be used in grpc logger
 // package (google.golang.org/grpc/grpclog). For more information on grpc see
 // http://www.grpc.io, for grpc-go see https://github.com/grpc/grpc-go.
 package grpclogger
