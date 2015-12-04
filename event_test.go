@@ -171,7 +171,7 @@ func TestEventTypeUnmarshalling(t *testing.T) {
 		var e = EventType(0)
 		var gotEventType = &e
 
-		var expectedError error = nil
+		var expectedError error
 		if _, ok := findEventType(test.EventType.String()); !ok {
 			expectedError = ErrEventTypeUnknown
 		}
