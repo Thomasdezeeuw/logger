@@ -17,10 +17,14 @@ install:
   - go get golang.org/x/tools/cmd/cover
   - go get github.com/mattn/goveralls
 script:
-  - gofmt -s -d *.go
+  - gofmt -s -d *.go */**.go
   - go vet
+  - go vet ./grpclogger
+  - go vet ./internal/util
   - deadcode
-  - gocyclo -over 10 *.go
+  - deadcode grpclogger
+  - deadcode internal/util
+  - gocyclo -over 10 *.go */**.go
   - go test -race -v -covermode atomic -coverprofile coverage.out ./
   - go test -race -v -covermode atomic -coverprofile coverage2.out ./grpclogger
   - go test -race -v -covermode atomic -coverprofile coverage3.out ./internal/util
