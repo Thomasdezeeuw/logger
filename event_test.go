@@ -209,19 +209,6 @@ func TestNewEventTypeNotUnique(t *testing.T) {
 	NewEventType("my-event-type")
 }
 
-var (
-	// Minus builtin event types.
-	maxCostumEventTypes = math.MaxUint16 - len(eventTypeIndices)
-
-	oldEventTypeNames   = eventTypeNames
-	oldEventTypeIndices = eventTypeIndices
-)
-
-func resetEventTypes() {
-	eventTypeNames = oldEventTypeNames
-	eventTypeIndices = oldEventTypeIndices
-}
-
 func TestNewEventTypeLimit(t *testing.T) {
 	t.Skip("Skipping TestNewEventTypeLimit in takes more then ten minutes using covermode atomic")
 
@@ -257,4 +244,17 @@ func TestNewEventTypeLimit(t *testing.T) {
 	}()
 
 	NewEventType(fmt.Sprintf("EventType-%d", maxCostumEventTypes+1))
+}
+
+var (
+	// Minus builtin event types.
+	maxCostumEventTypes = math.MaxUint16 - len(eventTypeIndices)
+
+	oldEventTypeNames   = eventTypeNames
+	oldEventTypeIndices = eventTypeIndices
+)
+
+func resetEventTypes() {
+	eventTypeNames = oldEventTypeNames
+	eventTypeIndices = oldEventTypeIndices
 }
