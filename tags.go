@@ -58,3 +58,8 @@ func (tags Tags) MarshalJSON() ([]byte, error) {
 	buf = append(buf[:len(buf)-2], ']')
 	return buf, nil
 }
+
+// Append add new tags to given tags.
+func (tags Tags) Append(newTags ...string) Tags {
+	return append(tags, newTags...)
+}

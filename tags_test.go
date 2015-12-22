@@ -4,7 +4,10 @@
 
 package logger
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestTags(t *testing.T) {
 	t.Parallel()
@@ -36,6 +39,46 @@ func TestTags(t *testing.T) {
 		} else if got := string(json); got != test.expectedJSON {
 			t.Errorf("Expected %#v.MarshalJSON() to return %q, but got %q",
 				test.tags, test.expectedJSON, got)
+		}
+	}
+}
+
+func TestTagsAppend(t *testing.T) {
+	t.Parallel()
+
+	tags := make(Tags, 2, 3)
+	tags[0] = "tag1"
+	tags[1] = "tag2"
+
+	var tests = []struct {
+		originalTags Tags
+		addedTags    []string
+		expected     Tags
+	}{
+		{Tags{}, []string{}, Tags{}},
+		{make(Tags, 0, 1), []string{"tag1"}, Tags{"tag1"}},
+		{Tags{}, []string{"tag1"}, Tags{"tag1"}},
+		{Tags{"tag1"}, []string{"tag2"}, Tags{"tag1", "tag2"}},
+		{Tags{"tag1"}, []string{"tag2", "tag3", "tag4", "tag5", "tag5", "tag6",
+			"tag7", "tag8", "tag9", "tag10"}, Tags{"tag1", "tag2", "tag3", "tag4",
+			"tag5", "tag5", "tag6", "tag7", "tag8", "tag9", "tag10"}},
+		{tags, []string{"tag3"}, Tags{"tag1", "tag2", "tag3"}},
+	}
+
+	for _, test := range tests {
+		var copyOriginalTags = make(Tags, len(test.originalTags))
+		copy(copyOriginalTags, test.originalTags)
+
+		got := test.originalTags.Append(test.addedTags...)
+
+		if !reflect.DeepEqual(copyOriginalTags, test.originalTags) {
+			t.Fatalf("Expected the original tags to be uneffected and get %v, but got %v",
+				copyOriginalTags, test.originalTags)
+		}
+
+		if !reflect.DeepEqual(test.expected, got) {
+			t.Fatalf("Expected %#v.Append(%v) to return %v, but got %v",
+				test.originalTags, test.addedTags, test.expected, got)
 		}
 	}
 }
