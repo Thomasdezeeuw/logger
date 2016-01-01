@@ -157,9 +157,7 @@ func Close() error {
 }
 
 // Subbed for testing.
-var now = func() time.Time {
-	return time.Now()
-}
+var now = time.Now
 
 // Debug logs a debug message.
 func Debug(tags Tags, msg string) {
