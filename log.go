@@ -5,6 +5,7 @@
 package logger
 
 import (
+	"bytes"
 	"fmt"
 	"runtime"
 	"sync"
@@ -202,12 +203,56 @@ func Errorf(tags Tags, format string, v ...interface{}) {
 // Fatal logs a recovered error which could have killed the application. Fatal
 // adds a stack trace (type []byte) as Event.Data.
 func Fatal(tags Tags, recv interface{}) {
-	stackTrace := make([]byte, defaultStackSize)
-	n := runtime.Stack(stackTrace, false)
-	stackTrace = stackTrace[:n]
-
+	stackTrace := getStackTrace()
 	msg := util.InterfaceToString(recv)
 	eventChannel <- Event{FatalEvent, now(), tags, msg, stackTrace}
+}
+
+// Create a stack trace and remove the caller's function from the trace.
+func getStackTrace() []byte {
+	stackTrace := make([]byte, defaultStackSize)
+	for {
+		n := runtime.Stack(stackTrace, false)
+		if n < len(stackTrace) {
+			return removeFnFromStack(stackTrace[:n], n)
+		}
+
+		stackTrace = make([]byte, 2*len(stackTrace))
+	}
+}
+
+const newLine byte = '\n'
+
+// Threat as constant.
+var newLineBytes = []byte{newLine}
+
+// Remove a given number of functions from the stack trace.
+func removeFnFromStack(stackTrace []byte, n int) []byte {
+	newStackTrace := make([]byte, 0, len(stackTrace))
+
+	// Drop the lines with the function name and the line in the source.
+	//
+	// Given the following stack trace:
+	//	1. goroutine 17 [running]:
+	//	2. github.com/Thomasdezeeuw/logger.getStackTrace(0x0, 0x0, 0x0)
+	//	3. 	/Users/thomas/go/src/github.com/Thomasdezeeuw/logger/log.go:215 +0x83
+	//	4. github.com/Thomasdezeeuw/logger.Fatal(0xc82000cb40, 0x2, 0x2, 0x14dac0, 0xc82000b3e0)
+	//	5. 	/Users/thomas/go/src/github.com/Thomasdezeeuw/logger/log.go:206 +0x24
+	//	6. github.com/Thomasdezeeuw/logger.TestLog.func1(0xc82000cb40, 0x2, 0x2, 0x7, 0xecd77abac, 0x0, 0x2a6ee0, 0xc82000cb40, 0x2, 0x2, ...)
+	//	7. 	/Users/thomas/go/src/github.com/Thomasdezeeuw/logger/log_test.go:87 +0x9f
+	//	8. github.com/Thomasdezeeuw/logger.TestLog(0xc8200a0e10)
+	//	9. 	/Users/thomas/go/src/github.com/Thomasdezeeuw/logger/log_test.go:147 +0x9de
+	//
+	// Lines 2 & 3 will be dropped with n = 1. And lines 2 - 5 with n = 2, etc.
+	lines := bytes.Split(stackTrace, newLineBytes)
+	for i, line := range lines {
+		if i == 0 || i > (n*2) {
+			newStackTrace = append(newStackTrace, line...)
+			newStackTrace = append(newStackTrace, newLine)
+		}
+	}
+
+	return newStackTrace
 }
 
 // Thumbstone indicates a function is still used in production. When developing

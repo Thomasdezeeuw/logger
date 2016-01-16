@@ -123,12 +123,17 @@ func TestLog(t *testing.T) {
 			expectedEvent := expected[i]
 
 			if expectedEvent.Type == FatalEvent {
-				// sortof test the stacktrace, best we can do.
-				stacktrace := event.Data.([]byte)
-				if !bytes.HasPrefix(stacktrace, []byte("goroutine")) {
-					t.Errorf("Expected a stacktrace as data for a Fatal event, but got %s ",
-						string(stacktrace))
+				// sortof test the stack trace, best we can do.
+				stackTrace := event.Data.([]byte)
+				if !bytes.HasPrefix(stackTrace, []byte("goroutine")) {
+					t.Errorf("Expected a stack trace as data for a Fatal event, but got %s ",
+						string(stackTrace))
+				} else if bytes.Index(stackTrace, []byte("logger.getStackTrace")) != -1 ||
+					bytes.Index(stackTrace, []byte("logger.Fatal")) != -1 {
+					t.Errorf("Expected the stack trace to not contain the logger.Fatal and logger.getStackTrace, but got %s ",
+						string(stackTrace))
 				}
+
 				event.Data = nil
 			}
 
@@ -245,5 +250,24 @@ func expectPanic(t *testing.T, expected string) {
 	got := recv.(string)
 	if got != expected {
 		t.Fatalf("Expected panic value to be %s, but got %s", expected, got)
+	}
+}
+
+func TestGetStackTrace(t *testing.T) {
+	t.Parallel()
+
+	// Fake the Fatal call.
+	var stackTrace []byte
+	func() {
+		stackTrace = getStackTrace()
+	}()
+
+	if !bytes.HasPrefix(stackTrace, []byte("goroutine")) {
+		t.Errorf("Expected the stack trace to start with goroutine, but got %s ",
+			string(stackTrace))
+	} else if bytes.Index(stackTrace, []byte("logger.getStackTrace")) != -1 ||
+		bytes.Index(stackTrace, []byte("logger.TestGetStackTrace.func1")) != -1 {
+		t.Errorf("Expected the stack trace to not contain the logger.TestGetStackTrace.func1 and logger.getStackTrace, but got %s ",
+			string(stackTrace))
 	}
 }
