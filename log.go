@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	defaultStackSize        = 8192
+	defaultStackSize        = 4 * 1024
 	defaultEventChannelSize = 1024
 	maxNWriteErrors         = 5
 )
