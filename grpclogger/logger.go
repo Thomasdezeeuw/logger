@@ -1,3 +1,7 @@
+// Copyright (C) 2015-2016 Thomas de Zeeuw.
+//
+// Licensed under the MIT license that can be found in the LICENSE file.
+
 // Package grpclogger creates a logger interface to be used in grpc logger
 // package (google.golang.org/grpc/grpclog). For more information on grpc see
 // http://www.grpc.io, for grpc-go see https://github.com/grpc/grpc-go.

@@ -1,3 +1,7 @@
+// Copyright (C) 2015-2016 Thomas de Zeeuw.
+//
+// Licensed under the MIT license that can be found in the LICENSE file.
+
 package util
 
 import "fmt"
