@@ -36,3 +36,23 @@ func TestInterfaceToString(t *testing.T) {
 		}
 	}
 }
+
+func TestInterfacesToString(t *testing.T) {
+	tests := []struct {
+		values   []interface{}
+		expected string
+	}{
+		{[]interface{}{"string"}, "string"},
+		{[]interface{}{"string", 123}, "string 123"},
+		{[]interface{}{stringer(123), []byte("string"), errors.New("string")}, "string123 string string"},
+	}
+
+	for _, test := range tests {
+		got := InterfacesToString(test.values)
+
+		if got != test.expected {
+			t.Fatalf("Expected InterfaceToString(%#v) to return %s, but got %s",
+				test.values, test.expected, got)
+		}
+	}
+}

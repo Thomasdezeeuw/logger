@@ -23,7 +23,7 @@ type log struct {
 }
 
 func (log *log) Fatal(args ...interface{}) {
-	msg := interfacesToString(args)
+	msg := util.InterfaceToString(args)
 	logger.Fatal(log.tags, msg)
 	exit(log.closeFn)
 }
@@ -38,7 +38,7 @@ func (log *log) Fatalln(args ...interface{}) {
 }
 
 func (log *log) Print(args ...interface{}) {
-	msg := interfacesToString(args)
+	msg := util.InterfaceToString(args)
 	logger.Error(log.tags, errors.New(msg))
 }
 
@@ -48,16 +48,6 @@ func (log *log) Printf(format string, args ...interface{}) {
 
 func (log *log) Println(args ...interface{}) {
 	log.Print(args...)
-}
-
-// todo: maybe move this with interfaceToString to an internal package.
-func interfacesToString(value []interface{}) string {
-	var str string
-	for _, v := range value {
-		str += util.InterfaceToString(v)
-		str += " "
-	}
-	return str[:len(str)-1]
 }
 
 // Stubbed for testing.
