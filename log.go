@@ -214,7 +214,7 @@ func getStackTrace() []byte {
 	for {
 		n := runtime.Stack(stackTrace, false)
 		if n < len(stackTrace) {
-			return removeFnFromStack(stackTrace[:n], n)
+			return removeFnFromStack(stackTrace[:n], 2)
 		}
 
 		stackTrace = make([]byte, 2*len(stackTrace))
