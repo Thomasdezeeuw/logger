@@ -23,7 +23,7 @@ type log struct {
 }
 
 func (log *log) Fatal(args ...interface{}) {
-	msg := util.InterfaceToString(args)
+	msg := util.InterfacesToString(args)
 	logger.Fatal(log.tags, msg)
 	exit(log.closeFn)
 }
@@ -38,7 +38,7 @@ func (log *log) Fatalln(args ...interface{}) {
 }
 
 func (log *log) Print(args ...interface{}) {
-	msg := util.InterfaceToString(args)
+	msg := util.InterfacesToString(args)
 	logger.Error(log.tags, errors.New(msg))
 }
 
