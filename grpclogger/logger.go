@@ -64,6 +64,7 @@ func interfacesToString(value []interface{}) string {
 var osExit = os.Exit
 
 // Hate to do this, but it is what the default log package does.
+// Stubbed for testing.
 var exit = func(closeFn func()) {
 	closeFn()
 	osExit(1)
@@ -71,18 +72,18 @@ var exit = func(closeFn func()) {
 
 // CreateLogger creates a new logger that can be used in grpc/grpclog. It
 // follows the default log package style of logging and therefore it doesn't
-// have log levels. Because of this all calls to Print* will call logger.Error.
+// have log levels (EventType). Because of this all calls to Print* will call
+// logger.Error, hoping that grpclogger will only log errors in production.
 //
-// Another shortcoming of the Logger interface defined by grpclog is that used
+// Another shortcoming of the Logger interface defined by grpclog is that uses
 // an empty interface a lot. We combat this by trying to make this into a single
 // string using the fmt package. As result of this the message might not look
 // very pretty, but it will contain all the provided information.
 //
 // A third point is that a call to Fatal* in the builtin log package calls to
 // os.Exit, which closes the application immediately without running deffered
-// statements. To combat that we accept a close function which gets run before
-// the call to os.Exit. In this function logger.Close must be called by the
-// user.
+// statements. To combat that we accept a close function which runs before the
+// call to os.Exit. In this function logger.Close must be called by the user.
 func CreateLogger(tags logger.Tags, closeFn func()) grpclog.Logger {
 	return &log{tags, closeFn}
 }
