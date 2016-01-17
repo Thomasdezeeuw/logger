@@ -25,6 +25,7 @@ func TestInterfaceToString(t *testing.T) {
 		{[]byte("string"), "string"},
 		{errors.New("string"), "string"},
 		{123, "123"},
+		{[]interface{}{"string", 123}, "string 123"},
 	}
 
 	for _, test := range tests {

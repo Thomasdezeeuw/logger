@@ -17,6 +17,8 @@ func InterfaceToString(value interface{}) string {
 		return string(v)
 	case error:
 		return v.Error()
+	case []interface{}:
+		return InterfacesToString(v)
 	}
 	return fmt.Sprintf("%v", value)
 }
