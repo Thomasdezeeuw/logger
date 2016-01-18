@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Thomasdezeeuw/logger"
+	"github.com/kylelemons/godebug/pretty"
 	"google.golang.org/grpc/grpclog"
 )
 
@@ -46,9 +47,59 @@ func TestGrpcLogger(t *testing.T) {
 	logger.Start(&ew)
 
 	tags := logger.Tags{"TestGrpcLogger"}
-	now := time.Now()
+	logTime := time.Now()
 
 	grpclog.SetLogger(CreateLogger(tags, closeFn))
+	expectedEvents := callGrpcLogger(tags)
+
+	if err := logger.Close(); err != nil {
+		t.Fatal("Unexpected error closing logger: " + err.Error())
+	}
+
+	if expectedN, got := len(expectedEvents), len(ew.events); expectedN != got {
+		t.Fatalf("Expected %d events, but got got %d", expectedN, got)
+	}
+
+	const margin = 100 * time.Millisecond
+	for i, event := range ew.events {
+		expected, got := expectedEvents[i], event
+
+		// Can't mock time in the logger package, so we have a truncate it.
+		if !got.Timestamp.Truncate(margin).Equal(logTime.Truncate(margin)) {
+			diff := pretty.Compare(got.Timestamp.Format(time.RFC3339Nano),
+				logTime.Format(time.RFC3339Nano))
+			t.Errorf("Expected and actual event #%d timestamps don't match\n%s",
+				i, diff)
+			continue
+		}
+
+		// Now the timestamp is tested, make sure we don't fall over it later on.
+		got.Timestamp = expected.Timestamp
+
+		if expected.Type == logger.FatalEvent {
+			// Sortof test the stack trace, best we can do.
+			stackTrace := got.Data.([]byte)
+			if !bytes.HasPrefix(stackTrace, []byte("goroutine")) {
+				t.Errorf("Expected a stack trace as data for a Fatal event, but got %s ",
+					string(stackTrace))
+			}
+			got.Data = nil
+		}
+
+		if !reflect.DeepEqual(expected, got) {
+			diff := pretty.Compare(got, expected)
+			t.Errorf("Expected and actual #%d event don't match\n%s", i, diff)
+		}
+	}
+
+	if *closedCalled != 6 {
+		t.Fatalf("Expected the exit and close function to be called three times, but got %d",
+			*closedCalled/2)
+	}
+}
+
+// Make calls to the grpclog package and returns the expected events.
+func callGrpcLogger(tags logger.Tags) (expected []logger.Event) {
 	grpclog.Print("Error message")
 	grpclog.Printf("Error %s message", "formatted")
 	grpclog.Println("Error message")
@@ -56,52 +107,13 @@ func TestGrpcLogger(t *testing.T) {
 	grpclog.Fatalf("Fatal %s message", "formatted")
 	grpclog.Fatalln("Fatal message")
 
-	if err := logger.Close(); err != nil {
-		t.Fatal("Unexpected error closing: " + err.Error())
-	}
-
-	expected := []logger.Event{
-		{Type: logger.ErrorEvent, Timestamp: now, Tags: tags, Message: "Error message"},
-		{Type: logger.ErrorEvent, Timestamp: now, Tags: tags, Message: "Error formatted message"},
-		{Type: logger.ErrorEvent, Timestamp: now, Tags: tags, Message: "Error message"},
-		{Type: logger.FatalEvent, Timestamp: now, Tags: tags, Message: "Fatal message"},
-		{Type: logger.FatalEvent, Timestamp: now, Tags: tags, Message: "Fatal formatted message"},
-		{Type: logger.FatalEvent, Timestamp: now, Tags: tags, Message: "Fatal message"},
-	}
-
-	if expectedN, got := len(expected), len(ew.events); expectedN != got {
-		t.Fatalf("Expected %d events, but got only got %d", expectedN, got)
-	}
-
-	const margin = 100 * time.Millisecond
-	for i, event := range ew.events {
-		expectedEvent := expected[i]
-
-		// Can't mock time in the logger package, so we have a truncate it.
-		if !event.Timestamp.Truncate(margin).Equal(expectedEvent.Timestamp.Truncate(margin)) {
-			t.Errorf("Expected event #%d to be %v, but got %v", i, expectedEvent, event)
-			continue
-		}
-		event.Timestamp = expectedEvent.Timestamp
-
-		if expectedEvent.Type == logger.FatalEvent {
-			// sortof test the stacktrace, best we can do.
-			stacktrace := event.Data.([]byte)
-			if !bytes.HasPrefix(stacktrace, []byte("goroutine")) {
-				t.Errorf("Expected a stacktrace as data for a Fatal event, but got %s ",
-					string(stacktrace))
-			}
-			event.Data = nil
-		}
-
-		if expected, got := expectedEvent, event; !reflect.DeepEqual(expected, got) {
-			t.Errorf("Expected event #%d to be %v, but got %v", i, expected, got)
-		}
-	}
-
-	if *closedCalled != 6 {
-		t.Fatalf("Expected the exit and close function to be called three times, but got %d",
-			*closedCalled/2)
+	return []logger.Event{
+		{Type: logger.ErrorEvent, Tags: tags, Message: "Error message"},
+		{Type: logger.ErrorEvent, Tags: tags, Message: "Error formatted message"},
+		{Type: logger.ErrorEvent, Tags: tags, Message: "Error message"},
+		{Type: logger.FatalEvent, Tags: tags, Message: "Fatal message"},
+		{Type: logger.FatalEvent, Tags: tags, Message: "Fatal formatted message"},
+		{Type: logger.FatalEvent, Tags: tags, Message: "Fatal message"},
 	}
 }
 
