@@ -144,7 +144,7 @@ func TestExit(t *testing.T) {
 	if !closedCalled {
 		t.Fatal("Close function not called")
 	} else if exitCode != 1 {
-		t.Fatalf("Expceted exit to be called with 1, but got %d", exitCode)
+		t.Fatalf("Expected exit to be called with 1, but got %d", exitCode)
 	}
 }
 
