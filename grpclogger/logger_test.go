@@ -6,6 +6,7 @@ package grpclogger
 
 import (
 	"bytes"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -14,6 +15,8 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 	"google.golang.org/grpc/grpclog"
 )
+
+const timeMargin = 100 * time.Millisecond
 
 // EventWriter that collects the events and errors.
 type eventWriter struct {
@@ -60,35 +63,12 @@ func TestGrpcLogger(t *testing.T) {
 		t.Fatalf("Expected %d events, but got got %d", expectedN, got)
 	}
 
-	const margin = 100 * time.Millisecond
 	for i, event := range ew.events {
 		expected, got := expectedEvents[i], event
+		expected.Timestamp = logTime
 
-		// Can't mock time in the logger package, so we have a truncate it.
-		if !got.Timestamp.Truncate(margin).Equal(logTime.Truncate(margin)) {
-			diff := pretty.Compare(got.Timestamp.Format(time.RFC3339Nano),
-				logTime.Format(time.RFC3339Nano))
-			t.Errorf("Expected and actual event #%d timestamps don't match\n%s",
-				i, diff)
-			continue
-		}
-
-		// Now the timestamp is tested, make sure we don't fall over it later on.
-		got.Timestamp = expected.Timestamp
-
-		if expected.Type == logger.FatalEvent {
-			// Sortof test the stack trace, best we can do.
-			stackTrace := got.Data.([]byte)
-			if !bytes.HasPrefix(stackTrace, []byte("goroutine")) {
-				t.Errorf("Expected a stack trace as data for a Fatal event, but got %s ",
-					string(stackTrace))
-			}
-			got.Data = nil
-		}
-
-		if !reflect.DeepEqual(expected, got) {
-			diff := pretty.Compare(got, expected)
-			t.Errorf("Expected and actual #%d event don't match\n%s", i, diff)
+		if err := compareEvents(i, expected, got); err != nil {
+			t.Error(err)
 		}
 	}
 
@@ -115,6 +95,36 @@ func callGrpcLogger(tags logger.Tags) (expected []logger.Event) {
 		{Type: logger.FatalEvent, Tags: tags, Message: "Fatal formatted message"},
 		{Type: logger.FatalEvent, Tags: tags, Message: "Fatal message"},
 	}
+}
+
+func compareEvents(i int, expected, got logger.Event) error {
+	// Can't mock time in the logger package, so we have a truncate it.
+	if !got.Timestamp.Truncate(timeMargin).Equal(expected.Timestamp.Truncate(timeMargin)) {
+		diff := pretty.Compare(got.Timestamp.Format(time.RFC3339Nano),
+			expected.Timestamp.Format(time.RFC3339Nano))
+		return fmt.Errorf("Expected and actual event #%d timestamps don't match\n%s",
+			i, diff)
+	}
+
+	// Now the timestamp is tested, make sure we don't fall over it later on.
+	got.Timestamp = expected.Timestamp
+
+	if expected.Type == logger.FatalEvent {
+		// Sortof test the stack trace, best we can do.
+		stackTrace := got.Data.([]byte)
+		if !bytes.HasPrefix(stackTrace, []byte("goroutine")) {
+			return fmt.Errorf("Expected a stack trace as data for a Fatal event, but got %s ",
+				string(stackTrace))
+		}
+		got.Data = nil
+	}
+
+	if !reflect.DeepEqual(expected, got) {
+		diff := pretty.Compare(got, expected)
+		return fmt.Errorf("Expected and actual #%d event don't match\n%s", i, diff)
+	}
+
+	return nil
 }
 
 func TestExit(t *testing.T) {
