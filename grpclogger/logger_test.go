@@ -36,17 +36,10 @@ func (ew *eventWriter) Close() error {
 }
 
 func TestGrpcLogger(t *testing.T) {
-	oldExit := exit
-	closedCalled := 0
-	exit = func(closeFn func()) {
-		closeFn()
-		closedCalled++
-	}
-	defer func() {
-		exit = oldExit
-	}()
+	closedCalled := setupExitCounter()
+	defer resetExitFns()
 	closeFn := func() {
-		closedCalled++
+		*closedCalled++
 	}
 
 	var ew eventWriter
@@ -106,16 +99,14 @@ func TestGrpcLogger(t *testing.T) {
 		}
 	}
 
-	if closedCalled != 6 {
-		t.Fatalf("Expected the exit and close function to be called three times, but got %d", closedCalled/2)
+	if *closedCalled != 6 {
+		t.Fatalf("Expected the exit and close function to be called three times, but got %d",
+			*closedCalled/2)
 	}
 }
 
 func TestExit(t *testing.T) {
-	oldExit := osExit
-	defer func() {
-		osExit = oldExit
-	}()
+	defer resetExitFns()
 
 	var exitCode int
 	var closedCalled bool
@@ -133,4 +124,23 @@ func TestExit(t *testing.T) {
 	} else if exitCode != 1 {
 		t.Fatalf("Expceted exit to be called with 1, but got %d", exitCode)
 	}
+}
+
+var (
+	oldExit   = exit
+	oldOSExit = osExit
+)
+
+func setupExitCounter() (counter *int) {
+	var cnt int
+	exit = func(closeFn func()) {
+		closeFn()
+		cnt++
+	}
+	return &cnt
+}
+
+func resetExitFns() {
+	exit = oldExit
+	osExit = oldOSExit
 }
