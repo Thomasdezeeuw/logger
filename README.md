@@ -27,20 +27,20 @@ package main
 import "github.com/Thomasdezeeuw/logger"
 
 func main() {
+	eventWriter := logger.NewConsoleEventWriter(logger.DebugEvent)
+	logger.Start(eventWriter)
+	
 	// IMPORTANT! Otherwise not all logs will be written!
 	defer logger.Close()
-
-	ew := logger.NewConsoleEventWriter()
-	logger.Start(ew)
 
 	user := "Thomas"
 	userId := "1"
 	tags := logger.Tags{"README.md", "main", "user:" + userId}
-	logger.Infof(tags, "Hi %s!", user)
-	logger.Warn(logger.Tags{"main"}, "We need make this application functional")
+	logger.Infof(tags, "%s says Hi!", user)
+	logger.Warn(tags, "We need make this application functional")
 
 	// Output:
-	//2015-11-02 21:38:12 [Info] README.md, main, user:1: Hi Thomas!
+	//2015-11-02 21:38:12 [Info] README.md, main, user:1: Thomas says Hi!
 	//2015-11-02 21:38:12 [Warn] main: We need make this application functional
 }
 ```
