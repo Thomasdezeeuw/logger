@@ -12,7 +12,7 @@
 // logging is done asynchronously. The logger package can used simultaneously
 // from multiple goroutines.
 //
-// Because the logger package is asynchronous Close musted be called before the
+// Because the logger package is asynchronous Close must be called before the
 // program exits, this way logger will make sure all log event will be written.
 // After Close is called all calls to any log operation will panic. This is
 // because internally the logger package uses a channel to make the logging
