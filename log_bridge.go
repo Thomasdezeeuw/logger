@@ -31,7 +31,7 @@ var ErrLogFormat = errors.New("logger: log format incorrect")
 // BridgeLogPgk creates a bridge between the loggger package and the standard
 // library's log package. Calls to log.Print* will be converted into an Event
 // and will be written to to the event writes provided to the Start function.
-// Events will have LogEvent as EventType, because the standard libary's log
+// Events will have LogEvent as EventType, because the standard library's log
 // package doesn't have log levels.
 //
 // EXPERIMENTAL, api might change.
