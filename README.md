@@ -1,7 +1,7 @@
 # Logger
 
 [![GoDoc](https://godoc.org/github.com/Thomasdezeeuw/logger?status.svg)](https://godoc.org/github.com/Thomasdezeeuw/logger)
-[![Build Status](https://travis-ci.org/Thomasdezeeuw/logger.png?branch=master)](https://travis-ci.org/Thomasdezeeuw/logger)
+[![Build Status](https://img.shields.io/travis/Thomasdezeeuw/logger.svg)](https://travis-ci.org/Thomasdezeeuw/logger)
 [![Coverage Status](https://coveralls.io/repos/Thomasdezeeuw/logger/badge.svg?branch=master&service=github)](https://coveralls.io/github/Thomasdezeeuw/logger?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Thomasdezeeuw/logger)](https://goreportcard.com/report/github.com/Thomasdezeeuw/logger)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Thomasdezeeuw/logger/blob/master/LICENSE)
@@ -31,7 +31,7 @@ import "github.com/Thomasdezeeuw/logger"
 func main() {
 	eventWriter := logger.NewConsoleEventWriter(logger.DebugEvent)
 	logger.Start(eventWriter)
-	
+
 	// IMPORTANT! Otherwise not all logs will be written!
 	defer logger.Close()
 
