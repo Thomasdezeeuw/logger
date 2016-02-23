@@ -101,24 +101,28 @@ func writeEvents() {
 
 // StartEventWriter blocks until the events channel is closed.
 func startEventWriter(ew EventWriter, events <-chan Event, wg *sync.WaitGroup) {
-	var badEventWriter = false
-
 	for event := range events {
-		if badEventWriter {
-			// Simply drain the channel.
-			// todo: improve this, don't send to the channel anymore if the writer is
-			// bad.
+		err := writeEvent(ew, event)
+		if err == nil {
 			continue
 		}
 
-		if err := writeEvent(ew, event); err != nil {
-			// At this point the EventWriter is bad and we won't write to it anymore.
-			ew.HandleError(err)
-			badEventWriter = true
-		}
+		// At this point the EventWriter is bad and we won't write to it anymore.
+		ew.HandleError(err)
+
+		// todo: improve this, don't send to the channel anymore if the writer is
+		// bad.
+		drain(events)
+		break
 	}
 
 	wg.Done()
+}
+
+// Drain an events channel. It returns once the event channel is closed.
+func drain(events <-chan Event) {
+	for range events {
+	}
 }
 
 // WriteEvent tries to write the event to the given EventWriter, it tries it up
