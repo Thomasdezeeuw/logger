@@ -35,7 +35,9 @@ type EventWriter interface {
 	// called with ErrBadEventWriter if this happens.
 	Write(Event) error
 
-	// HandleError is called every time Write returns an error.
+	// HandleError is called every time Write returns an error. A special case is
+	// ErrBadEventWriter, if this error gets passed it means the EventWriter is
+	// considered bad and will no longer receive events.
 	HandleError(error)
 
 	// Close is called on the EventWriter once Close() (on the package) is called.
