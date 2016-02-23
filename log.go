@@ -127,8 +127,9 @@ func drain(events <-chan Event) {
 
 // WriteEvent tries to write the event to the given EventWriter, it tries it up
 // to maxNWriteErrors times. If EventWriter.Write returns an error it gets
-// passed to the error handler of the EventWriter. This function either returns
-// ErrBadEventWriter or nil as an error.
+// passed to the error handler of the EventWriter.
+//
+// This function either returns ErrBadEventWriter or nil as an error.
 func writeEvent(ew EventWriter, event Event) error {
 	for n := 1; n <= maxNWriteErrors; n++ {
 		err := ew.Write(event)
