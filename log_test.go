@@ -18,13 +18,6 @@ import (
 var t1 = time.Date(2015, 9, 1, 14, 22, 36, 0, time.UTC)
 
 func init() {
-	margin := time.Millisecond
-	t, t2 := now(), time.Now()
-	if !t.Truncate(margin).Equal(t2.Truncate(margin)) {
-		panic(fmt.Sprintf("now() doesn't return time.Now()! Expected %s, got %s",
-			t2, t))
-	}
-
 	now = func() time.Time {
 		return t1
 	}
@@ -110,7 +103,7 @@ func TestLog(t *testing.T) {
 			{Type: ErrorEvent, Timestamp: now(), Tags: tags, Message: "Error formatted message"},
 			{Type: FatalEvent, Timestamp: now(), Tags: tags, Message: "Fatal message"},
 			{Type: ThumbEvent, Timestamp: now(), Tags: tags, Message: "Function testThumstone called by " +
-				fn.Name() + ", from file " + file + " on line 88"},
+				fn.Name() + ", from file " + file + " on line 81"},
 			event,
 		}
 
