@@ -7,7 +7,6 @@ package logger
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"reflect"
 	"runtime"
 	"testing"
@@ -100,7 +99,7 @@ func TestLog(t *testing.T) {
 		{Type: ErrorEvent, Timestamp: now(), Tags: tags, Message: "Error formatted message"},
 		{Type: FatalEvent, Timestamp: now(), Tags: tags, Message: "Fatal message"},
 		{Type: ThumbEvent, Timestamp: now(), Tags: tags, Message: "Function testThumstone called by " +
-			"github.com/Thomasdezeeuw/logger.TestLog, from file " + file + " on line 79"},
+			"github.com/Thomasdezeeuw/logger.TestLog, from file " + file + " on line 78"},
 		event,
 	}
 
@@ -196,42 +195,29 @@ func TestErrorEventWriter(t *testing.T) {
 	closeError := errors.New("Close error")
 
 	defer reset()
-	eew := errorEventWriter{
-		closeError: closeError,
-	}
+	eew := errorEventWriter{closeError: closeError}
 	Start(&eew)
 
 	tags := Tags{"my", "tags"}
 	Info(tags, "Info message1")
-	Info(tags, "Info message2")
-	Info(tags, "Info message3")
-	Info(tags, "Info message4")
-	Info(tags, "Info message5")
 	Info(tags, "Won't be written to the writer")
 
-	if err := Close(); err == nil {
-		t.Fatal("Expected a closing error, but didn't get one")
-	} else if err != closeError {
-		t.Fatalf("Expceted the closing error to be %q, but got %q",
-			closeError.Error(), err.Error())
+	if err := Close(); err != closeError {
+		t.Fatalf("Expceted the closing error to be %v, but got %v",
+			closeError, err)
 	}
 
-	// 6 = 5 bad write errors + 1 bad EventWriter error.
-	if expected, got := 6, len(eew.errors); got != expected {
+	if expected, got := maxNWriteErrors+1, len(eew.errors); got != expected {
 		t.Fatalf("Expected %d errors, but only got %d", expected, got)
 	}
 
 	// Expected errors:
-	// 0 - 4: write event 1.
+	// 0 - 4: Write error: Info message1.
 	// 5:     EventWriter is bad.
-
+	expected := errors.New("Write error: Info message1")
 	for i, got := range eew.errors {
-		var expected error
 		if i == 5 {
 			expected = ErrBadEventWriter
-		} else {
-			d := 1
-			expected = fmt.Errorf("Write error: Info message%d", d)
 		}
 
 		if got.Error() != expected.Error() {
