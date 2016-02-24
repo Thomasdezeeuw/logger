@@ -140,6 +140,10 @@ func getPanicRecoveredValue(msg string) (recv interface{}) {
 	panic(msg)
 }
 
+func testThumstone(tags Tags) {
+	Thumbstone(tags, "testThumstone")
+}
+
 func TestStartTwice(t *testing.T) {
 	defer reset()
 	var ew eventWriter
@@ -223,10 +227,6 @@ func TestErrorEventWriter(t *testing.T) {
 				i, expected.Error(), got.Error())
 		}
 	}
-}
-
-func testThumstone(tags Tags) {
-	Thumbstone(tags, "testThumstone")
 }
 
 func reset() {
