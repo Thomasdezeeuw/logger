@@ -87,8 +87,7 @@ func TestLog(t *testing.T) {
 		t.Fatalf("Unexpected error(s): %v", ew.errors)
 	}
 
-	pc, file, _, _ := runtime.Caller(0)
-	fn := runtime.FuncForPC(pc)
+	_, file, _, _ := runtime.Caller(0)
 
 	expected := []Event{
 		{Type: DebugEvent, Timestamp: now(), Tags: tags, Message: "Debug message"},
@@ -101,7 +100,7 @@ func TestLog(t *testing.T) {
 		{Type: ErrorEvent, Timestamp: now(), Tags: tags, Message: "Error formatted message"},
 		{Type: FatalEvent, Timestamp: now(), Tags: tags, Message: "Fatal message"},
 		{Type: ThumbEvent, Timestamp: now(), Tags: tags, Message: "Function testThumstone called by " +
-			fn.Name() + ", from file " + file + " on line 79"},
+			"github.com/Thomasdezeeuw/logger.TestLog, from file " + file + " on line 79"},
 		event,
 	}
 
