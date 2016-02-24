@@ -253,20 +253,23 @@ var newLineBytes = []byte{newLine}
 //	3. 	/Users/thomas/go/src/github.com/Thomasdezeeuw/logger/log_test.go:87 +0x9f
 //	4. github.com/Thomasdezeeuw/logger.TestLog(0xc8200a0e10)
 //	5. 	/Users/thomas/go/src/github.com/Thomasdezeeuw/logger/log_test.go:147 +0x9de
+//
+// Note: this modifies the given stackTrace.
 func removeFnsFromStack(stackTrace []byte) []byte {
-	newStackTrace := make([]byte, 0, len(stackTrace))
-
-	lines := bytes.Split(stackTrace, newLineBytes)
-	newStackTrace = append(newStackTrace, lines[0]...)
-	newStackTrace = append(newStackTrace, newLine)
+	endFirstLine := bytes.IndexByte(stackTrace, newLine)
+	startFithLine := endFirstLine
 
 	// Ignore the second though fifth lines, the first two functions.
-	for _, line := range lines[4:] {
-		newStackTrace = append(newStackTrace, line...)
-		newStackTrace = append(newStackTrace, newLine)
+	for i := 0; i <= 3; i++ {
+		n := bytes.IndexByte(stackTrace[startFithLine+1:], newLine)
+		if n != -1 {
+			startFithLine += n + 1
+		} else {
+			break
+		}
 	}
 
-	return newStackTrace
+	return append(stackTrace[:endFirstLine], stackTrace[startFithLine:]...)
 }
 
 // Thumbstone indicates a function is still used in production. When developing
