@@ -9,9 +9,10 @@ import "testing"
 // go test -run none -bench . -benchmem -benchtime 5s -timeout 15m
 
 var (
-	benchmarkResultTagString string
-	benchmarkResultTagBytes  []byte
-	benchmarkResultTagJSON   []byte
+	benchmarkResultTagString  string
+	benchmarkResultTagBytes   []byte
+	benchmarkResultTagJSON    []byte
+	benchmarkResultStackTrace []byte
 )
 
 var (
@@ -100,4 +101,22 @@ func benchmarkTagsMarshalJSON(b *testing.B, tags Tags) {
 		json, _ = tags.MarshalJSON()
 	}
 	benchmarkResultTagJSON = json
+}
+
+func BenchmarkRemoveFnsFromStack(b *testing.B) {
+	var stackTrace = []byte(`goroutine 17 [running]:
+github.com/Thomasdezeeuw/logger.getStackTrace(0x0, 0x0, 0x0)
+	/Users/thomas/go/src/github.com/Thomasdezeeuw/logger/log.go:215 +0x83
+github.com/Thomasdezeeuw/logger.Fatal(0xc82000cb40, 0x2, 0x2, 0x14dac0, 0xc82000b3e0)
+	/Users/thomas/go/src/github.com/Thomasdezeeuw/logger/log.go:206 +0x24
+github.com/Thomasdezeeuw/logger.TestLog.func1(0xc82000cb40, 0x2, 0x2, 0x7, 0xecd77abac, 0x0, 0x2a6ee0, 0xc82000cb40, 0x2, 0x2, ...)
+	/Users/thomas/go/src/github.com/Thomasdezeeuw/logger/log_test.go:87 +0x9f
+github.com/Thomasdezeeuw/logger.TestLog(0xc8200a0e10)
+	/Users/thomas/go/src/github.com/Thomasdezeeuw/logger/log_test.go:147 +0x9de`)
+
+	var newStackTrace []byte
+	for n := 0; n < b.N; n++ {
+		newStackTrace = removeFnsFromStack(stackTrace)
+	}
+	benchmarkResultStackTrace = newStackTrace
 }
