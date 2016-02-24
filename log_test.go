@@ -162,6 +162,18 @@ func TestStartNoEventWriter(t *testing.T) {
 	Start()
 }
 
+func expectPanic(t *testing.T, expected string) {
+	recv := recover()
+	if recv == nil {
+		t.Fatal(`Expected a panic, but didn't get one`)
+	}
+
+	got := recv.(string)
+	if got != expected {
+		t.Fatalf("Expected panic value to be %s, but got %s", expected, got)
+	}
+}
+
 // EventWriter that always returns a write error with the event message in it.
 type errorEventWriter struct {
 	closeError error
@@ -234,18 +246,6 @@ func reset() {
 	eventChannelClosed = make(chan struct{}, 1)
 	eventWriters = []EventWriter{}
 	started = false
-}
-
-func expectPanic(t *testing.T, expected string) {
-	recv := recover()
-	if recv == nil {
-		t.Fatal(`Expected a panic, but didn't get one`)
-	}
-
-	got := recv.(string)
-	if got != expected {
-		t.Fatalf("Expected panic value to be %s, but got %s", expected, got)
-	}
 }
 
 func TestGetStackTrace(t *testing.T) {
