@@ -11,6 +11,8 @@ import (
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/kylelemons/godebug/pretty"
 )
 
 // Time returned in calling now(), setup and test in init.
@@ -58,11 +60,10 @@ func TestLog(t *testing.T) {
 	eventType := NewEventType("my-event-type")
 	data := user{1, "Thomas"}
 	event := Event{
-		Type:      eventType,
-		Timestamp: now(),
-		Tags:      tags,
-		Message:   "My event",
-		Data:      data,
+		Type:    eventType,
+		Tags:    tags,
+		Message: "My event",
+		Data:    data,
 	}
 	recv := getPanicRecoveredValue("Fatal message")
 
@@ -89,17 +90,17 @@ func TestLog(t *testing.T) {
 	_, file, _, _ := runtime.Caller(0)
 
 	expected := []Event{
-		{Type: DebugEvent, Timestamp: now(), Tags: tags, Message: "Debug message"},
-		{Type: DebugEvent, Timestamp: now(), Tags: tags, Message: "Debug formatted message"},
-		{Type: InfoEvent, Timestamp: now(), Tags: tags, Message: "Info message"},
-		{Type: InfoEvent, Timestamp: now(), Tags: tags, Message: "Info formatted message"},
-		{Type: WarnEvent, Timestamp: now(), Tags: tags, Message: "Warn message"},
-		{Type: WarnEvent, Timestamp: now(), Tags: tags, Message: "Warn formatted message"},
-		{Type: ErrorEvent, Timestamp: now(), Tags: tags, Message: "Error message"},
-		{Type: ErrorEvent, Timestamp: now(), Tags: tags, Message: "Error formatted message"},
-		{Type: FatalEvent, Timestamp: now(), Tags: tags, Message: "Fatal message"},
-		{Type: ThumbEvent, Timestamp: now(), Tags: tags, Message: "Function testThumstone called by " +
-			"github.com/Thomasdezeeuw/logger.TestLog, from file " + file + " on line 78"},
+		{Type: DebugEvent, Message: "Debug message"},
+		{Type: DebugEvent, Message: "Debug formatted message"},
+		{Type: InfoEvent, Message: "Info message"},
+		{Type: InfoEvent, Message: "Info formatted message"},
+		{Type: WarnEvent, Message: "Warn message"},
+		{Type: WarnEvent, Message: "Warn formatted message"},
+		{Type: ErrorEvent, Message: "Error message"},
+		{Type: ErrorEvent, Message: "Error formatted message"},
+		{Type: FatalEvent, Message: "Fatal message"},
+		{Type: ThumbEvent, Message: "Function testThumstone called by github.com" +
+			"/Thomasdezeeuw/logger.TestLog, from file " + file + " on line 79"},
 		event,
 	}
 
@@ -110,6 +111,8 @@ func TestLog(t *testing.T) {
 
 	for i, event := range ew.events {
 		expectedEvent := expected[i]
+		expectedEvent.Timestamp = now()
+		expectedEvent.Tags = tags
 
 		if expectedEvent.Type == FatalEvent {
 			// sortof test the stack trace, best we can do.
@@ -119,15 +122,16 @@ func TestLog(t *testing.T) {
 					string(stackTrace))
 			} else if bytes.Index(stackTrace, []byte("logger.getStackTrace")) != -1 ||
 				bytes.Index(stackTrace, []byte("logger.Fatal")) != -1 {
-				t.Errorf("Expected the stack trace to not contain the logger.Fatal and logger.getStackTrace, but got %s ",
-					string(stackTrace))
+				t.Errorf("Expected the stack trace to not contain the logger.Fatal and "+
+					"logger.getStackTrace, but got %s ", string(stackTrace))
 			}
 
 			event.Data = nil
 		}
 
-		if expected, got := expectedEvent, event; !reflect.DeepEqual(expected, got) {
-			t.Errorf("Expected event #%d to be %v, but got %v", i, expected, got)
+		if !reflect.DeepEqual(expectedEvent, event) {
+			diff := pretty.Compare(event, expectedEvent)
+			t.Errorf("Unexpected difference in event #%d: %s", i, diff)
 		}
 	}
 }
