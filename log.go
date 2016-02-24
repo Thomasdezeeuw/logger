@@ -230,9 +230,6 @@ func getStackTrace() []byte {
 
 const newLine byte = '\n'
 
-// Threat as constant.
-var newLineBytes = []byte{newLine}
-
 // Remove the first two functions from the stack trace. Given the following
 // stack trace:
 //
