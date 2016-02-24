@@ -65,6 +65,7 @@ func TestLog(t *testing.T) {
 		Message:   "My event",
 		Data:      data,
 	}
+	recv := getPanicRecoveredValue("Fatal message")
 
 	Debug(tags, "Debug message")
 	Debugf(tags, "Debug %s message", "formatted")
@@ -74,68 +75,70 @@ func TestLog(t *testing.T) {
 	Warnf(tags, "Warn %s message", "formatted")
 	Error(tags, errors.New("Error message"))
 	Errorf(tags, "Error %s message", "formatted")
+	Fatal(tags, recv)
+	testThumstone(tags)
+	Log(event)
 
+	if err := Close(); err != nil {
+		t.Fatal("Unexpected error closing: " + err.Error())
+	}
+
+	if len(ew.errors) != 0 {
+		t.Fatalf("Unexpected error(s): %v", ew.errors)
+	}
+
+	pc, file, _, _ := runtime.Caller(0)
+	fn := runtime.FuncForPC(pc)
+
+	expected := []Event{
+		{Type: DebugEvent, Timestamp: now(), Tags: tags, Message: "Debug message"},
+		{Type: DebugEvent, Timestamp: now(), Tags: tags, Message: "Debug formatted message"},
+		{Type: InfoEvent, Timestamp: now(), Tags: tags, Message: "Info message"},
+		{Type: InfoEvent, Timestamp: now(), Tags: tags, Message: "Info formatted message"},
+		{Type: WarnEvent, Timestamp: now(), Tags: tags, Message: "Warn message"},
+		{Type: WarnEvent, Timestamp: now(), Tags: tags, Message: "Warn formatted message"},
+		{Type: ErrorEvent, Timestamp: now(), Tags: tags, Message: "Error message"},
+		{Type: ErrorEvent, Timestamp: now(), Tags: tags, Message: "Error formatted message"},
+		{Type: FatalEvent, Timestamp: now(), Tags: tags, Message: "Fatal message"},
+		{Type: ThumbEvent, Timestamp: now(), Tags: tags, Message: "Function testThumstone called by " +
+			fn.Name() + ", from file " + file + " on line 79"},
+		event,
+	}
+
+	if len(ew.events) != len(expected) {
+		t.Fatalf("Expected to have %d events, but got %d",
+			len(expected), len(ew.events))
+	}
+
+	for i, event := range ew.events {
+		expectedEvent := expected[i]
+
+		if expectedEvent.Type == FatalEvent {
+			// sortof test the stack trace, best we can do.
+			stackTrace := event.Data.([]byte)
+			if !bytes.HasPrefix(stackTrace, []byte("goroutine")) {
+				t.Errorf("Expected a stack trace as data for a Fatal event, but got %s ",
+					string(stackTrace))
+			} else if bytes.Index(stackTrace, []byte("logger.getStackTrace")) != -1 ||
+				bytes.Index(stackTrace, []byte("logger.Fatal")) != -1 {
+				t.Errorf("Expected the stack trace to not contain the logger.Fatal and logger.getStackTrace, but got %s ",
+					string(stackTrace))
+			}
+
+			event.Data = nil
+		}
+
+		if expected, got := expectedEvent, event; !reflect.DeepEqual(expected, got) {
+			t.Errorf("Expected event #%d to be %v, but got %v", i, expected, got)
+		}
+	}
+}
+
+func getPanicRecoveredValue(msg string) (recv interface{}) {
 	defer func() {
-		recv := recover()
-		Fatal(tags, recv)
-		testThumstone(tags)
-		Log(event)
-
-		if err := Close(); err != nil {
-			t.Fatal("Unexpected error closing: " + err.Error())
-		}
-
-		if len(ew.errors) != 0 {
-			t.Fatalf("Unexpected error(s): %v", ew.errors)
-		}
-
-		pc, file, _, _ := runtime.Caller(0)
-		fn := runtime.FuncForPC(pc)
-
-		expected := []Event{
-			{Type: DebugEvent, Timestamp: now(), Tags: tags, Message: "Debug message"},
-			{Type: DebugEvent, Timestamp: now(), Tags: tags, Message: "Debug formatted message"},
-			{Type: InfoEvent, Timestamp: now(), Tags: tags, Message: "Info message"},
-			{Type: InfoEvent, Timestamp: now(), Tags: tags, Message: "Info formatted message"},
-			{Type: WarnEvent, Timestamp: now(), Tags: tags, Message: "Warn message"},
-			{Type: WarnEvent, Timestamp: now(), Tags: tags, Message: "Warn formatted message"},
-			{Type: ErrorEvent, Timestamp: now(), Tags: tags, Message: "Error message"},
-			{Type: ErrorEvent, Timestamp: now(), Tags: tags, Message: "Error formatted message"},
-			{Type: FatalEvent, Timestamp: now(), Tags: tags, Message: "Fatal message"},
-			{Type: ThumbEvent, Timestamp: now(), Tags: tags, Message: "Function testThumstone called by " +
-				fn.Name() + ", from file " + file + " on line 81"},
-			event,
-		}
-
-		if len(ew.events) != len(expected) {
-			t.Fatalf("Expected to have %d events, but got %d",
-				len(expected), len(ew.events))
-		}
-
-		for i, event := range ew.events {
-			expectedEvent := expected[i]
-
-			if expectedEvent.Type == FatalEvent {
-				// sortof test the stack trace, best we can do.
-				stackTrace := event.Data.([]byte)
-				if !bytes.HasPrefix(stackTrace, []byte("goroutine")) {
-					t.Errorf("Expected a stack trace as data for a Fatal event, but got %s ",
-						string(stackTrace))
-				} else if bytes.Index(stackTrace, []byte("logger.getStackTrace")) != -1 ||
-					bytes.Index(stackTrace, []byte("logger.Fatal")) != -1 {
-					t.Errorf("Expected the stack trace to not contain the logger.Fatal and logger.getStackTrace, but got %s ",
-						string(stackTrace))
-				}
-
-				event.Data = nil
-			}
-
-			if expected, got := expectedEvent, event; !reflect.DeepEqual(expected, got) {
-				t.Errorf("Expected event #%d to be %v, but got %v", i, expected, got)
-			}
-		}
+		recv = recover()
 	}()
-	panic("Fatal message")
+	panic(msg)
 }
 
 func TestStartTwice(t *testing.T) {
