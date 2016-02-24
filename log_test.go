@@ -252,7 +252,8 @@ func TestGetStackTrace(t *testing.T) {
 			string(stackTrace))
 	} else if bytes.Index(stackTrace, []byte("logger.getStackTrace")) != -1 ||
 		bytes.Index(stackTrace, []byte("logger.TestGetStackTrace.func1")) != -1 {
-		t.Errorf("Expected the stack trace to not contain the logger.TestGetStackTrace.func1 and logger.getStackTrace, but got %s ",
+		t.Errorf("Expected the stack trace to not contain the "+
+			"logger.TestGetStackTrace.func1 and logger.getStackTrace, but got it: %s",
 			string(stackTrace))
 	}
 }
