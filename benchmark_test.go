@@ -104,7 +104,7 @@ func benchmarkTagsMarshalJSON(b *testing.B, tags Tags) {
 }
 
 func BenchmarkRemoveFnsFromStack(b *testing.B) {
-	var stackTrace = []byte(`goroutine 17 [running]:
+	var orgStackTrace = []byte(`goroutine 17 [running]:
 github.com/Thomasdezeeuw/logger.getStackTrace(0x0, 0x0, 0x0)
 	/Users/thomas/go/src/github.com/Thomasdezeeuw/logger/log.go:215 +0x83
 github.com/Thomasdezeeuw/logger.Fatal(0xc82000cb40, 0x2, 0x2, 0x14dac0, 0xc82000b3e0)
@@ -116,6 +116,8 @@ github.com/Thomasdezeeuw/logger.TestLog(0xc8200a0e10)
 
 	var newStackTrace []byte
 	for n := 0; n < b.N; n++ {
+		stackTrace := make([]byte, len(orgStackTrace))
+		copy(stackTrace, orgStackTrace)
 		newStackTrace = removeFnsFromStack(stackTrace)
 	}
 	benchmarkResultStackTrace = newStackTrace
