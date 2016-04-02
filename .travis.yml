@@ -30,4 +30,4 @@ script:
   - go test -race -v -covermode atomic -coverprofile coverage3.out ./internal/util
   - cat coverage2.out | tail -n +2 >> coverage.out
   - cat coverage3.out | tail -n +2 >> coverage.out
-  - goveralls -coverprofile coverage.out -service travis-ci -repotoken $COVERALLS_TOKEN
+  - goveralls -coverprofile coverage.out -service travis-ci -repotoken $COVERALLS_TOKEN || exit 0
