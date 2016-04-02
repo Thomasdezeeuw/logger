@@ -210,11 +210,11 @@ func TestNewEventTypeNotUnique(t *testing.T) {
 }
 
 func TestNewEventTypeLimit(t *testing.T) {
-	t.Skip("Skipping TestNewEventTypeLimit in takes more then ten minutes using covermode atomic")
 
 	if testing.Short() {
 		t.Skip("Skipping TestNewEventTypeLimit in short mode")
 	}
+	t.Skip("Skipping TestNewEventTypeLimit it takes more then ten minutes using covermode atomic")
 	defer resetEventTypes()
 
 	for i := 1; i <= maxCostumEventTypes; i++ {
