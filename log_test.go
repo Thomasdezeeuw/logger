@@ -120,8 +120,8 @@ func TestLog(t *testing.T) {
 			if !bytes.HasPrefix(stackTrace, []byte("goroutine")) {
 				t.Errorf("Expected a stack trace as data for a Fatal event, but got %s ",
 					string(stackTrace))
-			} else if bytes.Index(stackTrace, []byte("logger.getStackTrace")) != -1 ||
-				bytes.Index(stackTrace, []byte("logger.Fatal")) != -1 {
+			} else if bytes.Contains(stackTrace, []byte("logger.getStackTrace")) ||
+				bytes.Contains(stackTrace, []byte("logger.Fatal")) {
 				t.Errorf("Expected the stack trace to not contain the logger.Fatal and "+
 					"logger.getStackTrace, but got %s ", string(stackTrace))
 			}
@@ -250,8 +250,8 @@ func TestGetStackTrace(t *testing.T) {
 	if !bytes.HasPrefix(stackTrace, []byte("goroutine")) {
 		t.Errorf("Expected the stack trace to start with goroutine, but got %s ",
 			string(stackTrace))
-	} else if bytes.Index(stackTrace, []byte("logger.getStackTrace")) != -1 ||
-		bytes.Index(stackTrace, []byte("logger.TestGetStackTrace.func1")) != -1 {
+	} else if bytes.Contains(stackTrace, []byte("logger.getStackTrace")) ||
+		bytes.Contains(stackTrace, []byte("logger.TestGetStackTrace.func1")) {
 		t.Errorf("Expected the stack trace to not contain the "+
 			"logger.TestGetStackTrace.func1 and logger.getStackTrace, but got it: %s",
 			string(stackTrace))
