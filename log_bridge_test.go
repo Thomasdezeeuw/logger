@@ -46,8 +46,9 @@ func TestBridgeLogPgk(t *testing.T) {
 		for i, event := range ew.events {
 			expectedEvent := expected[i]
 
-			// Can't mock time in the log package, so we have a truncate it.
-			if !event.Timestamp.Truncate(margin).Equal(expectedEvent.Timestamp.Truncate(margin)) {
+			// Can't mock time in the log package, so we'll make sure it falls within
+			// the margin.
+			if event.Timestamp.Sub(expectedEvent.Timestamp) > margin {
 				t.Errorf("Expected event #%d to be %v, but got %v", i, expectedEvent, event)
 				continue
 			}
