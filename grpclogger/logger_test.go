@@ -16,8 +16,6 @@ import (
 	"google.golang.org/grpc/grpclog"
 )
 
-const timeMargin = 100 * time.Millisecond
-
 // EventWriter that collects the events and errors.
 type eventWriter struct {
 	events []logger.Event
@@ -98,8 +96,11 @@ func callGrpcLogger(tags logger.Tags) (expected []logger.Event) {
 }
 
 func compareEvents(i int, expected, got logger.Event) error {
-	// Can't mock time in the logger package, so we have a truncate it.
-	if !got.Timestamp.Truncate(timeMargin).Equal(expected.Timestamp.Truncate(timeMargin)) {
+	const margin = time.Millisecond
+
+	// Can't mock time in the grpclog package, so we'll make sure it falls within
+	// the margin.
+	if got.Timestamp.Sub(expected.Timestamp) > margin {
 		diff := pretty.Compare(got.Timestamp.Format(time.RFC3339Nano),
 			expected.Timestamp.Format(time.RFC3339Nano))
 		return fmt.Errorf("Expected and actual event #%d timestamps don't match\n%s",
