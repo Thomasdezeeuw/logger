@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/Thomasdezeeuw/logger"
-	"github.com/kylelemons/godebug/pretty"
 	"google.golang.org/grpc/grpclog"
 )
 
@@ -101,10 +100,7 @@ func compareEvents(i int, expected, got logger.Event) error {
 	// Can't mock time in the grpclog package, so we'll make sure it falls within
 	// the margin.
 	if got.Timestamp.Sub(expected.Timestamp) > margin {
-		diff := pretty.Compare(got.Timestamp.Format(time.RFC3339Nano),
-			expected.Timestamp.Format(time.RFC3339Nano))
-		return fmt.Errorf("Expected and actual event #%d timestamps don't match\n%s",
-			i, diff)
+		return fmt.Errorf("Expected event #%d to be %v, but got %v", i, expected, got)
 	}
 
 	// Now the timestamp is tested, make sure we don't fall over it later on.
@@ -121,8 +117,7 @@ func compareEvents(i int, expected, got logger.Event) error {
 	}
 
 	if !reflect.DeepEqual(expected, got) {
-		diff := pretty.Compare(got, expected)
-		return fmt.Errorf("Expected and actual #%d event don't match\n%s", i, diff)
+		return fmt.Errorf("Expected event #%d to be %v, but got %v", i, expected, got)
 	}
 
 	return nil

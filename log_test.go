@@ -11,8 +11,6 @@ import (
 	"runtime"
 	"testing"
 	"time"
-
-	"github.com/kylelemons/godebug/pretty"
 )
 
 // Time returned in calling now(), setup and test in init.
@@ -100,7 +98,7 @@ func TestLog(t *testing.T) {
 		{Type: ErrorEvent, Message: "Error formatted message"},
 		{Type: FatalEvent, Message: "Fatal message"},
 		{Type: ThumbEvent, Message: "Function testThumstone called by github.com" +
-			"/Thomasdezeeuw/logger.TestLog, from file " + file + " on line 79"},
+			"/Thomasdezeeuw/logger.TestLog, from file " + file + " on line 77"},
 		event,
 	}
 
@@ -130,8 +128,7 @@ func TestLog(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(expectedEvent, event) {
-			diff := pretty.Compare(event, expectedEvent)
-			t.Errorf("Unexpected difference in event #%d: %s", i, diff)
+			t.Errorf("Expected event #%d to be %v, but got %v", i, expectedEvent, event)
 		}
 	}
 }
